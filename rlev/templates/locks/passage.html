@@ -1,0 +1,761 @@
+{% load custom_filters %}
+
+
+<div class="row d-flex justify-content-between align-items-center" style="padding: var(--bs-modal-header-padding)">
+    <div class="col-6">
+        {% if type_view == 'edit' %}
+        <h5 class="modal-title">עריכת מצב מעבר</h5>
+        {% else %}
+        <h5 class="modal-title">הוספת מצב מעבר</h5>
+        {% endif %}
+    </div>
+    <input id="type_view" type="text" hidden value="{{ type_view }}">
+    <div class="col-6 d-flex justify-content-end align-items-start">
+        {% if type_view == 'edit' %}
+        <div class="form-check form-switch mx-3">
+            <label class="form-check-label" id="lable_switch_active_passage" for="switch_active_passage">{% if details.active %}פעיל{% else %}לא פעיל{% endif %}</label>
+            <input class="form-check-input" type="checkbox" role="switch" id="switch_active_passage" {% if details.active %} checked {% endif %}>
+        </div>
+        <i class="bi bi-trash text-secondary mx-1 cursor-pointer" data-toggle="tooltip" title="מחק מצב מעבר" id="delete_passage"></i></span>
+
+        {% endif %}
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="{% if type_view == 'edit' %} col-6 {% endif %} px-4">
+            <input type="text" hidden id="passage_id" value="{{ details.id }}">
+            <label for="description">תיאור</label>
+            <input id="description" class="form-control mb-3" value="{{ details.description }}">
+            <div class="btn-group d-flex justify-content-start align-items-start mb-3">
+                <input type="radio" class="btn-check" value="1" id="cyclic" {% if details.is_cyclic or type_view == 'new' %}checked{% endif %} name="is_cyclic">
+                <label class="btn btn-outline-primary" for="cyclic" style="font-size: small;">
+                    <i class="bi bi-arrow-repeat"></i> מחזורי
+                </label>
+                <input type="radio" class="btn-check" value="0" {% if not details.is_cyclic %}checked{% endif %} name="is_cyclic" id="singal">
+                <label class="btn btn-outline-primary" for="singal" style="font-size: small;">
+                    <i class="bi bi-1-circle"></i> חד פעמי
+                </label>
+            </div>
+
+            <div class="btn-group d-flex justify-content-start align-items-start mb-3">
+                <input type="radio" class="btn-check" id="date" value="1" name="type_range" {% if details.type_range == 1 or type_view == 'new' %}checked{% endif %} {% if details.is_cyclic == 1 %} disabled {% endif %}>
+                <label class="btn btn-outline-primary p-1 " for="date" style="font-size: small;">
+                    <i class="bi bi-calendar3"></i> טווח תאריכים
+                </label>
+                <input type="radio" class="btn-check" id="day_in_week" value="2" name="type_range" {% if details.type_range == 2 %}checked{% endif %}>
+                <label class="btn btn-outline-primary p-1" for="day_in_week" style="font-size: small;">
+                    <i class="bi bi-calendar-week"></i> ימים בשבוע
+                </label>
+                <input type="radio" class="btn-check" id="hebrow_date" value="3" name="type_range" {% if details.type_range == 3 %}checked{% endif %}>
+                <label class="btn btn-outline-primary p-1" for="hebrow_date" style="font-size: small;">
+                    <i class="bi bi-calendar3-event"></i> תאריך עברי
+                </label>
+            </div>
+
+            <div class="mb-3" style="font-size: small;">
+                <div id="date_elemants" class="form-group type-range row {% if not details.type_range == 1 and type_view == 'edit' %}d-none{% endif %}">
+                    <div class="col-6">
+                        <label for="valid_date">
+                            תאריך התחלה
+                        </label>
+                        <input type="date" class="form-control" id="start_range_date" style="text-align: right" value="{% if type_view == 'edit' %}{{ details.start_range }}{% endif %}">
+                    </div>
+                    <div class="col-6">
+                        <label for="valid_date">
+                            תאריך סיום
+                        </label>
+                        <input type="date" class="form-control" id="end_range_date" style="text-align: right" value="{% if type_view == 'edit' %}{{ details.end_range }}{% endif %}">
+                    </div>
+                </div>
+                <div id="day_in_week_elemants" class="form-group type-range row {% if not details.type_range == 2 %}d-none{% endif %}">
+                    <div class="col-6">
+                        <label for="day_start">
+                            החל מיום
+                        </label>
+                        <select class="form-control" id="day_start" value="{{ details.start_range }}">
+                            <option value="0">בחר</option>
+                            {% for day in days_in_week %}
+                            <option value="{{ day.id }}" {% if day.id == details.start_range %} selected {% endif %}>{{ day.description }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label for="day_end">
+                            עד יום
+                        </label>
+                        <select class="form-control" id="day_end">
+                            <option value="0">בחר</option>
+                            {% for day in days_in_week %}
+                            <option value="{{ day.id }}" {% if day.id == details.end_range %} selected {% endif %}>{{day.description }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div id="hebrow_date_elemants" class="form-group type-range row {% if not details.type_range == 3 %}d-none{% endif %}">
+                    <div class="col-6">
+                        <label for="hebrow_day_start">
+                            החל מתאריך
+                        </label>
+                        <div class="input-group">
+                            <select class="form-control" id="hebrow_day_start" value="{{ details.start_range.day_in_month}}">
+                                <option value="0">בחר</option>
+                                {% for day in days_in_months %}
+                                <option value="{{ day.id }}" {% if day.id == details.start_range.day_in_month %} selected {% endif %}>{{ day.description }}</option>
+                                {% endfor %}
+                            </select>
+                            <select class="form-control" id="hebrow_month_start" value="{{ details.start_range.month }}">
+                                <option value="0">בחר</option>
+                                {% for month in months %}
+                                <option value="{{ month.id }}" {% if month.id == details.start_range.month %} selected {% endif %}>{{ month.description }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <label for="hebrow_day_end">
+                            עד תאריך
+                        </label>
+                        <div class="input-group">
+                            <select class="form-control" id="hebrow_day_end" value="{{ details.end_range.day_in_month }}">
+                                <option value="0">בחר</option>
+                                {% for day in days_in_months %}
+                                <option value="{{ day.id }}" {% if day.id == details.end_range.day_in_month %} selected {% endif %}>{{ day.description }}</option>
+                                {% endfor %}
+                            </select>
+                            <select class="form-control" id="hebrow_month_end" value="{{ details.end_range.month }}">
+                                <option value="0">בחר</option>
+                                {% for month in months %}
+                                <option value="{{ month.id }}" {% if month.id == details.end_range.month %} selected {% endif %}>{{ month.description }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group row mb-2" style="font-size: small;">
+                <div class="col-6">
+                    <div class="d-flex justify-content-between align-items-center ">
+                        <label>
+                            שעת התחלה
+                        </label>
+                        <i id="btn_start_time_sunset" class="bi bi-sunset clock-sunset start cursor-pointer mx-1 {% if not details.type_start_time == 1 and type_view == 'edit'%}d-none{% endif %}"></i>
+                        <i id="btn_start_time_clock" class="bi bi-clock clock-sunset start cursor-pointer mx-1 {% if not details.type_start_time == 2%}d-none{% endif %}"></i>
+                    </div>
+                    <div id="time_start" class="clock-sunset start {% if not details.type_start_time == 1 and type_view == 'edit' %}d-none{% endif %}">
+                        <input type="time" class="form-control" id="start_time_clock" name="cycle_start_date" style="text-align: right" value="{% if details.type_start_time == 1 %}{{ details.start_time }}{% endif %}">
+                    </div>
+
+                    <div id="time_sunset_start" class="clock-sunset start {% if not details.type_start_time == 2 %}d-none{% endif %}">
+                        <div class="input-group">
+                            <input type="text" class="form-control form-control-sm" id="start_time_sunset" value="{{ details.start_time.diff_minute }}" placeholder="הזן..">
+                            <input type="text" value="דקות" class="form-control form-control-sm" disabled>
+                        </div>
+                        <select class="form-control form-control-sm" id="start_time_sunset_type_diff" value="{{ details.start_time.diff_type }}">
+                            <option {% if details.start_time.diff_type == 1 %} selected {% endif %} value="1">לפני השקיעה
+                            </option>
+                            <option {% if details.start_time.diff_type == 2 %} selected {% endif %} value="2">אחרי השקיעה
+                            </option>
+                        </select>
+                    </div>
+
+                </div>
+                <div class="col-6">
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <label>
+                            שעת סיום
+                        </label>
+                        <i id="btn_end_time_sunset" class="bi bi-sunset clock-sunset end cursor-pointer mx-1 {% if not details.type_end_time == 1 and type_view == 'edit'%}d-none{% endif %}"></i>
+                        <i id="btn_end_time_clock" class="bi bi-clock clock-sunset end cursor-pointer mx-1 {% if not details.type_end_time == 2%}d-none{% endif %}"></i>
+                    </div>
+                    <div id="time_end" class="clock-sunset end {% if not details.type_end_time == 1 and type_view == 'edit' %}d-none{% endif %}">
+
+                        <input type="time" class="form-control" id="end_time_clock" style="text-align: right" value="{% if details.type_end_time == 1 %}{{ details.end_time }}{% endif %}">
+                    </div>
+                    <div class="clock-sunset end {% if not details.type_end_time == 2 %}d-none{% endif %}">
+                        <div class="input-group">
+                            <input type="text" id="end_time_sunset" class="form-control form-control-sm" value="{{ details.end_time.diff_minute }}" placeholder="הזן..">
+                            <input type="text" value="דקות" class="form-control form-control-sm" disabled>
+                        </div>
+                        <select id="end_time_sunset_type_diff" class="form-control form-control-sm" value="{{ details.end_time.diff_type }}">
+                            <option {% if details.end_time.diff_type == 1 %} selected {% endif %} value="1">לפני השקיעה
+                            </option>
+                            <option {% if details.end_time.diff_type == 2 %} selected {% endif %} value="2">אחרי השקיעה
+                            </option>
+                        </select>
+                    </div>
+
+                </div>
+            </div>
+            <div class="form-check form-switch">
+                <label class="form-check-label" id="lable_unlock_in_active" for="unlock_in_active">פתיחת מנעולים אוטומטית</label>
+                <input class="form-check-input" type="checkbox" role="switch" id="unlock_in_active" {% if details.unlock_in_active or type_view == 'new' %} checked {% endif %}>
+            </div>
+
+            <label class="mt-1 form-check-label" id="lable_error_level">רמת דחיפות בעת שגיאה</label>
+            <br>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="error_level" {% if details.error_level == 1 or type_view == 'new' %} checked {% endif %} id="error_level1" value="1">
+                <label class="form-check-label" for="inlineRadio1">ללא</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="error_level" {% if details.error_level == 2 %} checked {% endif %} id="error_level2" value="2">
+                <label class="form-check-label" for="inlineRadio2">דחוף</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="error_level" {% if details.error_level == 3 %} checked {% endif %} id="error_level3" value="3">
+                <label class="form-check-label" for="inlineRadio3">קריטי</label>
+              </div>
+        </div>
+        {% if type_view == 'edit' %}
+        <div class="col-6">
+            {% if is_admin %}
+            <div class="m-2">
+                <div class="d-flex justify-content-between" id="userHeader">
+                    <h5>משתמשים מורשים</h5>
+                    <div><span class="badge rounded-pill bg-primary" id="addPassageUserBtn" style="cursor: pointer;"><i class="bi bi-plus-circle"></i> הוסף משתמש</span></div>
+                </div>
+                <div class="d-flex border rounded m-1 p-1 flex-wrap justify-content-start align-items-start" id="userContainer" style="max-width: 100%; height: 10vh; overflow: auto;">
+                </div>
+            </div>
+            {% endif %}
+            <div class="m-2">
+                <div class="d-flex justify-content-between cursor-pointer">
+                    <h5>מנעולים</h5>
+                    <div><span class="badge rounded-pill bg-primary" id="add_locks_to_passage"><i class="bi bi-plus-circle"></i> הוסף מנעולים</span></div>
+                </div>
+                <div class="border rounded p-2" style="height: 30vh; overflow: auto">
+                    <table class="table table-hover small table-sm table-clickble table-striped" id="passage_locks_list">
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+        {% endif %}
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+    <button type="button" id="save_passage" class="btn btn-primary">שמור</button>
+</div>
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+        $('input[name="is_cyclic"]').change(function () {
+            if (this.value == '1') {
+                if ($("#date").is(':checked')) {
+                    $('#date').prop('checked', false);
+                    $("#day_in_week").prop('checked', true);
+                    change_type_range('day_in_week');
+                }
+                $('#date').prop('disabled', true);
+            } else if (this.value == '0') {
+                $('#date').attr('disabled', false);
+            }
+
+        });
+
+        $('input[name="type_range"]').change(function () {
+            change_type_range(this.id);
+        });
+        $(".clock-sunset.bi").click(function () {
+
+            let type;
+            if ($(this).hasClass('start')) type = "start";
+            else type = "end";
+
+            $(".clock-sunset." + type).toggleClass('d-none');
+            $(".clock-sunset." + type + " input:enabled").val('');
+            $(".clock-sunset." + type + " select").val('1');
+        });
+        $("#save_passage").click(save_passage);
+        $('#delete_passage').click(delete_passage);
+        $("#passage_locks_list").on('click', '.passage-button-action', passage_button_action);
+        $("#add_locks_to_passage").click(add_locks_to_passage);
+        $("#switch_active_passage").change(switch_active_passage);
+        $("#addPassageUserBtn").click(get_passage_user_options);
+        get_locks_passage_list();
+        if ($("#userContainer").length) get_passage_users_list();
+    });
+
+    function get_passage_users_list() {
+        passage_id = $("#passage_id").val();
+        
+        $.ajax({
+            url: "get_passage_users/" + passage_id,
+            type: "GET",
+            success: function (data) {
+                users_list = data.users_list;
+
+                $('#userContainer').empty();
+                for (let i = 0; i < users_list.length; i++) {
+                    let userItem = $('<div>').addClass('d-flex justify-content-between align-items-center bg-secondary rounded m-1').css(
+                        'width', 'fit-content'
+                    );
+                    let span = $('<span>').addClass('text-white fw-bold mx-1').css('font-size', 'small').text(users_list[i].name);
+                    let btn = $('<button>').addClass('btn btn-secondary rounded-end p-0 px-1 lock_link_btn').css('font-size', 'small').text('x').attr('data-id', users_list[i].id).click(remove_user_from_passage);
+                    $(userItem).append(span);
+                    $(userItem).append(btn);
+                    $('#userContainer').append(userItem)
+                }
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function remove_user_from_passage() {
+        let user_object = $(this).parent();
+        let user_id = $(this).data('id');
+
+        $.ajax({
+            url: "remove_user_from_passage/" + user_id,
+            type: "GET",
+            success: function (data) {
+                get_passage_users_list();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function get_passage_user_options() {
+        let passage_id = $("#passage_id").val();
+        
+        let left = $(this).position().left;
+        let top = $(this).position().top + $(this).outerHeight();
+
+        $('#selectPassageUser').remove();
+        $.ajax({
+            url: "get_user_passage_options/" + passage_id,
+            type: "GET",
+            success: function (data) {
+                users_options = data.users_options;
+
+                let SelectInput = $('<select>').addClass('form-select border border-primary rounded')
+                    .attr('id', 'selectPassageUser')
+                    .attr('multiple', 'multiple')
+                    .css({ 'width': '25vh', 'position': 'absolute', 'left': left + 'px', 'top': top + 'px' })
+                    .on('change', add_user_to_passage)
+                    .on('blur', function () {
+                        $(this).remove();
+                    });
+
+                for (let i = 0; i < users_options.length; i++) {
+                    let option = $('<option>').attr('value', users_options[i].id).text(users_options[i].name);
+                    SelectInput.append(option);
+                }
+
+                $('#userHeader').append(SelectInput);
+                SelectInput.focus();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+
+        });
+    }
+
+    function add_user_to_passage(){
+        let passage_id = $("#passage_id").val();
+        let user_id = $(this).val();
+
+        $.ajax({
+            url: "add_user_to_passage/" + passage_id + '/' + user_id,
+            type: "GET",
+            success: function (data) {
+                get_passage_users_list();
+                $('#selectPassageUser').remove();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+
+    }
+
+
+    function switch_active_passage() {
+        let passage_id = $("#passage_id").val();
+        let checkbox = $(this);
+
+        let current_status = checkbox.is(':checked');
+        let active_val = current_status ? 1 : 0;
+
+        $.ajax({
+            url: "change_active_passage/" + passage_id + "/" + active_val,
+            type: 'GET',
+            success: function (response) {
+                if (response.success) {
+                    if (active_val) $("#lable_switch_active_passage").text('פעיל');
+                    else $("#lable_switch_active_passage").text('לא פעיל');
+                    refresh_passages_screen();
+                } else {
+                    alert_message(response.error, "error");
+                    checkbox.prop('checked', !current_status);
+                }
+            },
+            error: function (xhr, status, error) {
+                alert_message("An error occurred: " + error, "error");
+                checkbox.prop('checked', !current_status);
+            }
+        });
+    }
+
+    function get_locks_passage_list() {
+        let passage_id = $("#passage_id").val();
+        if (passage_id.length) {
+            let passage_locks_table_html = ''
+
+            $.ajax({
+                url: 'get_locks_passage_list/' + passage_id,
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    let locks_passage = data.locks_passage;
+
+                    locks_passage.forEach(lock => {
+                        let row = `<tr data-id="${lock.id}">`;
+                        row += `<td class="col-6">${lock.lock_details.lock_alias}</td>`;
+
+                        let passage_text = '';
+                        let passage_color = '';
+                        let unlock_text = '';
+                        let unlock_color = '';
+                        let actions = [];
+                        switch (lock.passage_status) {
+                            case 0:
+                                passage_text = 'משדר..'
+                                passage_color = 'warning'
+                                actions.push('delete')
+                                break;
+                            case 1:
+                                passage_text = 'פעיל'
+                                passage_color = 'success'
+                                actions.push('cancel')
+                                break;
+                            case 2:
+                                if (lock.mode == 3) {
+                                    actions.push('restart')
+                                    passage_text = 'בוטל'
+                                    passage_color = 'info'
+                                }
+                                else {
+                                    passage_text = 'לא פעיל'
+                                    passage_color = 'secondary'
+                                }
+                                actions.push('delete')
+                                break;
+                        }
+                        let passage_status = '';
+                        if (lock.passage_time == 0) {
+                            passage_status = `<span class="badge passage-button-action cursor-pointer text-bg-${passage_color}" data-action="reset_passage"><i class="bi bi-exclamation-triangle text-danger"></i> ${passage_text}</span>`;
+                        }
+                        else {
+                            passage_status = `<span class="badge text-bg-${passage_color}">${passage_text}</span>`;
+                        }
+                        row += `<td class="col-2">${passage_status}</td>`;
+
+                        switch (lock.unlock_status) {
+                            case 1:
+                                unlock_text = 'פותח מנעול..'
+                                unlock_color = 'warning'
+                                break;
+                            case 2:
+                                unlock_text = 'בודק פתיחה..'
+                                unlock_color = 'warning'
+                                break;
+                            case 3:
+                                unlock_text = 'פתיחה בוצעה'
+                                unlock_color = 'success'
+                                break;
+                        }
+                        let unlock_status = '';
+                        if (lock.unlock_in_active && lock.mode == 1 && lock.unlock_status) {
+                            if (lock.unlock_time == 0) {
+                                unlock_status = `<span class="badge passage-button-action cursor-pointer text-bg-${unlock_color}" data-action="reset_unlock"><i class="bi bi-exclamation-triangle text-danger"></i> ${unlock_text}</span>`;
+                            }
+                            else {
+                                unlock_status = `<span class="badge text-bg-${unlock_color}">${unlock_text}</span>`;
+                            }
+                        }
+                        row += `<td class="col-2">${unlock_status}</td>`;
+
+                        let buttons = ''
+                        actions.forEach(type_action => {
+                            switch (type_action) {
+                                case 'restart':
+                                    buttons += `<i class="cursor-pointer passage-button-action bi bi-arrow-clockwise" data-toggle="tooltip" title="הפעל מחדש" data-action="restart"></i> `
+                                    break;
+                                case 'cancel':
+                                    buttons += `<i class="cursor-pointer passage-button-action bi bi-x-circle" data-toggle="tooltip" title="בטל מצב מעבר" data-action="cancel"></i> `
+                                    break;
+                                case 'delete':
+                                    buttons += `<i class="cursor-pointer passage-button-action bi bi-trash3" data-toggle="tooltip" title="מחק" data-action="delete"></i> `
+                                    break;
+
+                            }
+                        });
+
+                        row += `<td class="col-2 text-end">${buttons}</td>`;
+                        row += `</tr>`;
+                        passage_locks_table_html += row;
+                    })
+                    let passage_locks_table = $("#passage_locks_list tbody");
+                    passage_locks_table.html(passage_locks_table_html);
+                    $('[data-toggle="tooltip"]').tooltip();
+                }
+
+            });
+        }
+    }
+
+    function passage_button_action() {
+        let action = $(this).data('action');
+        let lock_passage_id = $(this).closest('tr').data('id');
+
+        $.ajax({
+            url: 'lock_passage_action/' + action + '/' + lock_passage_id,
+            type: "GET",
+            success: function () {
+                refresh_passages_screen();
+            }
+        })
+    }
+
+
+    async function add_locks_to_passage() {
+        let selected_locks = await select_locks();
+        let locks_ids = selected_locks.locks_ids;
+        if (locks_ids.length == 0) {
+            return;
+        }
+        let passage_id = $("#passage_id").val();
+
+        $.ajax({
+            url: 'add_locks_passage/' + passage_id,
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(locks_ids),
+            beforeSend: function (xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", csrfToken);
+            },
+            success: function () {
+                refresh_passages_screen()
+                fetch('do_passage_locks_actions/' + passage_id);
+            }
+        })
+    }
+
+
+    function change_type_range(to_type) {
+        $(".type-range").addClass("d-none");
+        $("#" + to_type + "_elemants").removeClass("d-none");
+        $(".type-range input").val('');
+    }
+
+
+
+    function save_passage() {
+        let passage_id = $("#passage_id").val();
+        let description = $('#description').val();
+        if (description.length == 0) {
+            alert_message('יש להזין תיאור', 'error');
+            return;
+        }
+
+        let is_cyclic = $('input[name="is_cyclic"]:checked').val();
+        let type_range = $('input[name="type_range"]:checked').val();
+
+        switch (type_range) {
+            case "1":
+                var start_range = $('#start_range_date').val();
+                var end_range = $('#end_range_date').val();
+                if (end_range.length == 0 || start_range.length == 0) {
+                    alert_message('יש להזין תאריך התחלה ותאריך סיום', 'error');
+                    return;
+                }
+
+                break;
+            case "2":
+                var start_range = $('#day_start').val();
+                var end_range = $('#day_end').val();
+                if (end_range == "0" || start_range == "0") {
+                    alert_message('יש להזין יום התחלה ויום סיום', 'error');
+                    return;
+                }
+                break;
+            case "3":
+                let day_in_month_start = $('#hebrow_day_start').val();
+                let month_start = $('#hebrow_month_start').val();
+                let day_in_month_end = $('#hebrow_day_end').val();
+                let month_end = $('#hebrow_month_end').val();
+                if (day_in_month_start == "0" || month_start == "0" || day_in_month_end == "0" || month_end == "0") {
+                    alert_message('יש להזין תאריך התחלה ותאריך סיום', 'error');
+                    return;
+                }
+                var start_range = day_in_month_start + "-" + month_start;
+                var end_range = day_in_month_end + "-" + month_end;
+                break;
+        }
+        if ($("#btn_start_time_sunset").hasClass('d-none')) {
+            var type_start_time = 2;
+            let diff_minute = $('#start_time_sunset').val();
+            if (!diff_minute) {
+                alert_message('יש להזין זמן התחלה', 'error');
+                return;
+            }
+            if ($("#start_time_sunset_type_diff") == 1) var start_time = diff_minute;
+            else var start_time = -diff_minute;
+        }
+        else {
+            var type_start_time = 1;
+            var start_time_clock = $("#start_time_clock").val();
+
+            if (!start_time_clock) {
+                alert_message('יש להזין זמן התחלה', 'error');
+                return;
+            }
+            start_time = timeToMinutes(start_time_clock);
+        }
+
+        if ($("#btn_end_time_sunset").hasClass('d-none')) {
+            var type_end_time = 2;
+            let diff_minute = $('#end_time_sunset').val();
+            if (!diff_minute) {
+                alert_message('יש להזין זמן סיום', 'error');
+                return;
+            }
+            if ($("#start_time_sunset_type_diff") == 1) var end_time = diff_minute;
+            else var end_time = -diff_minute;
+        }
+        else {
+            var type_end_time = 1;
+            var end_time_clock = $("#end_time_clock").val();
+            if (!end_time_clock) {
+                alert_message('יש להזין זמן סיום', 'error');
+                return;
+            }
+            end_time = timeToMinutes(end_time_clock);
+        }
+        if (type_range == "1") {
+            let now = new Date();
+            let startDate = new Date(start_range + " " + start_time_clock);
+
+            let endDate = new Date(end_range + " " + end_time_clock);
+
+            if (endDate < now) {
+                alert_message('יש להזין תאריך סיום עתידי', 'error');
+                return;
+            }
+            if (startDate >= endDate) {
+                alert_message('יש להזין תאריך סיום המאוחר מתאריך ההתחלה', 'error');
+                return;
+            }
+        }
+        let unlock_in_active = $("#unlock_in_active").is(":checked") ? 1 : 0;
+        let error_level = $('input[name="error_level"]:checked').val();
+
+        data = {
+            id: passage_id,
+            description: description,
+            is_cyclic: is_cyclic,
+            type_range: type_range,
+            start_range: start_range,
+            end_range: end_range,
+            type_start_time: type_start_time,
+            start_time: start_time,
+            type_end_time: type_end_time,
+            end_time: end_time,
+            unlock_in_active: unlock_in_active,
+            error_level: error_level
+        }
+
+
+
+        $.ajax({
+            url: 'save_passage',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: function (xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", csrfToken);
+            },
+            success: function (response) {
+                if (passage_id.length > 0) {
+                    alert_message('הנתונים נשמרו בהצלחה', 'ok');
+                    $('#modal-lg').modal('hide');
+                }
+                else {
+                    alert_message('מצב המעבר נוסף בהצלחה', 'ok');
+                    $('#modal-md').modal('hide');
+                    loadContent('#lg-modal-content', 'passage/' + response.id);
+                    $('#modal-lg').modal('show');
+                }
+                refresh_passages_screen();
+
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status == 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+
+    }
+
+    function timeToMinutes(timeStr) {
+
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        return hours * 60 + minutes;
+    }
+
+    async function delete_passage() {
+        let passage_id = $("#passage_id").val();
+        try {
+            await confirmation_modal('האם הנך בטוח שברצונך למחוק את המצב מעבר?');
+
+            $.ajax({
+                url: "delete_passage/" + passage_id,
+                type: "GET",
+                success: function (response) {
+                    if (response.success) {
+                        alert_message("מצב המעבר נמחק בהצלחה", "ok");
+                        refresh_passages_screen()
+                        $('#modal-lg').modal('hide');
+                    }
+                    else {
+                        alert_message(response.error, "error");
+                    }
+                },
+                error: function () {
+                    if (xhr.status  === 401) {
+                        window.location.href = '/login';
+                    }
+                    else {
+                        alert_message("ארעה שגיאה במחיקת מצב המעבר", "error");
+                    }
+                }
+            });
+        } catch (error) {
+        }
+    }
+
+
+</script>

@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/dashboard/media/logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>טופס הרשמה - רחשי לב</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px 0;
+        }
+
+        .iphone-widget {
+            background-color: #fff;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            width: 90%;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        .logo img {
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+            transition: transform 0.3s ease;
+        }
+
+        .logo img:hover {
+            transform: scale(1.05);
+        }
+
+        .form-label {
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 12px 16px;
+            transition: all 0.3s ease;
+            font-size: 15px;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .form-check-input {
+            width: 20px;
+            height: 20px;
+            margin-top: 2px;
+            cursor: pointer;
+        }
+
+        .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+
+        .form-check-label {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 14px 28px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid #667eea;
+            color: #667eea;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background: #667eea;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .rounded.border {
+            border-radius: 12px !important;
+            border: 2px solid #e2e8f0 !important;
+        }
+
+        #guest_div {
+            background: linear-gradient(135deg, #f6f9fc 0%, #f0f4f8 100%);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid #e2e8f0;
+        }
+
+        #patiant_area {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .modal-content {
+            border-radius: 20px;
+            border: none;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            border-bottom: 2px solid #f0f4f8;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .bi-check-circle-fill {
+            animation: scaleIn 0.5s ease;
+        }
+
+        @keyframes scaleIn {
+            from {
+                transform: scale(0);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, #e0f2fe 0%, #dbeafe 100%);
+            border: 2px solid #93c5fd;
+            border-radius: 12px;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .spinner-border-sm {
+            animation: spin 0.75s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* אנימציה חלקה לשדות */
+        .form-control, .btn {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* צללים רכים יותר */
+        .iphone-widget {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        @media (max-width: 768px) {
+            .iphone-widget {
+                padding: 20px;
+                border-radius: 20px;
+            }
+
+            body {
+                padding: 10px 0;
+            }
+
+            .btn-primary, .btn-outline-primary {
+                padding: 12px 20px;
+            }
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <div class="iphone-widget" style="overflow: auto;">
+        <div class="logo mb-4" style="text-align: center;">
+            <img id="logo" src="/dashboard/media/logo.png" alt="Logo" class="img-fluid mb-3"
+                style="height: 8vh; width: auto;">
+            <h5>טופס הרשמה</h5>
+        </div>
+        
+        <!-- הודעות מערכת -->
+        <div id="alert_container"></div>
+        
+        <form id="GuestForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row mb-3">
+                <label for="typeReg" class="form-label fw-bold">רישום הטופס עבור</label>
+                <div id="typeReg">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input border-secondary" type="radio" name="type_reg" id="type_reg1" value="1">
+                        <label class="form-check-label" for="type_reg1">אירוח בבית הילד</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input border-secondary" type="radio" name="type_reg" id="type_reg2" value="2">
+                        <label class="form-check-label" for="type_reg2">קבלת כרטיס</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input border-secondary" type="radio" name="type_reg" id="type_reg3" value="3">
+                        <label class="form-check-label" for="type_reg3">צוות</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input border-secondary" type="radio" name="type_reg" id="type_reg4" value="4">
+                        <label class="form-check-label" for="type_reg4">נותן שירות</label>
+                    </div>
+                </div>
+                <small class="text-danger" id="typeReg_error" class="error-message d-none"></small>
+            </div>
+
+
+            <div class="row mb-3">
+                <div class="col-12 col-md-6">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input border-secondary" type="radio" name="IdNumberOrPassport" id="IdNumberOption"
+                            checked>
+                        <label class="form-check-label fw-bold" for="IdNumberOption">מספר זהות</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input border-secondary" type="radio" name="IdNumberOrPassport" id="passportOption">
+                        <label class="form-check-label fw-bold" for="passportOption">דרכון</label>
+                    </div>
+                    <input type="text" class="form-control mt-2 id_number" id="IdNumber" name="IdNumber"
+                        placeholder="מספר זהות" required>
+                    <small class="text-danger" id="IdNumber_error" class="d-none"></small>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12 col-md-6">
+                    <label for="firstName" class="form-label fw-bold">שם פרטי</label>
+                    <input type="text" class="form-control" id="firstName" name="firstName" required>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label for="lastName" class="form-label fw-bold">שם משפחה</label>
+                    <input type="text" class="form-control" id="lastName" name="lastName" required>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12 col-md-6">
+                    <label for="cellPhone" class="form-label fw-bold">פלאפון</label>
+                    <input type="tel" class="form-control" id="cellPhone" name="cellPhone" required>
+                </div>
+                <div class="col-12 col-md-6">
+                    <label for="email" class="form-label fw-bold">דואר אלקטרוני</label>
+                    <input type="email" class="form-control" id="email" name="email" required>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12 col-md-6">
+                    <label for="street" class="form-label fw-bold">רחוב</label>
+                    <input type="text" class="form-control" id="street" name="street">
+                </div>
+                <div class="col-12 col-md-2">
+                    <label for="houseNumber" class="form-label fw-bold">מספר בית</label>
+                    <input type="text" class="form-control" id="houseNumber" name="houseNumber">
+                </div>
+                <div class="col-12 col-md-4">
+                    <label for="city" class="form-label fw-bold">עיר</label>
+                    <input type="text" class="form-control" id="city" name="city">
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12 col-md-6">
+                    <label for="note" class="form-label fw-bold">הערות</label>
+                    <textarea class="form-control" id="note" name="note" rows="3"></textarea>
+                </div>
+            </div>
+
+
+            <div id="guest_div" class="row mb-3 d-none">
+
+                <label for="typeGuest" class="form-label fw-bold">האורח הינו</label>
+                <div id="typeGuest">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input border-secondary" type="radio" name="type_guest" id="type_guest1" value="1">
+                        <label class="form-check-label" for="type_guest1">מטופל</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input border-secondary" type="radio" name="type_guest" id="type_guest2" value="2">
+                        <label class="form-check-label" for="type_guest2">מלווה</label>
+                    </div>
+                </div>
+                <small class="text-danger" id="typeGuest_error" class="error-message d-none"></small>
+
+                <div id="guest_patiant_area" class="d-none row mb-3">
+                    <div class="col-12 col-md-6">
+                        <label for="GuestHospitalWard" class="form-label fw-bold">מחלקה</label>
+                        <input type="text" class="form-control guest-patiant-fields" id="GuestHospitalWard"
+                            name="GuestHospitalWard" placeholder="בחר ערך מהרשימה או הקלד אחר..">
+                    </div>
+                    <small class="text-danger" id="guest_patiant_error" class="error-message d-none"></small>
+                </div>
+
+                <div id="patiant_area" class="d-none mt-3">
+                    <h5>פרטי המטופל</h5>
+                    <div class="row mb-3">
+                        <div class="col-12 col-md-6">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="patiantIdNumberOrPassport"
+                                    id="patiantIdNumberOption" checked>
+                                <label class="form-check-label fw-bold" for="IdNumberOption">מספר זהות</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="patiantIdNumberOrPassport"
+                                    id="patiantpassportOption">
+                                <label class="form-check-label fw-bold" for="passportOption">דרכון</label>
+                            </div>
+                            <input type="text" class="form-control mt-2 id_number" id="patiantIdNumber"
+                                name="patiantIdNumber" placeholder="מספר זהות">
+                            <small class="text-danger" id="patiantIdNumber_error" class="error d-none"></small>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="patiantfirstName" class="form-label fw-bold">שם פרטי</label>
+                            <input type="text" class="form-control patiant-fields" id="patiantfirstName"
+                                name="patiantfirstName">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="patiantlastName" class="form-label fw-bold">שם משפחה</label>
+                            <input type="text" class="form-control patiant-fields" id="patiantlastName"
+                                name="patiantlastName">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-12 col-md-6">
+                            <label for="hospitalWard" class="form-label fw-bold">מחלקה</label>
+                            <input type="text" class="form-control hospital_ward patiant-fields" id="hospitalWard"
+                                name="hospitalWard" placeholder="בחר ערך מהרשימה או הקלד אחר..">
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label for="affinity" class="form-label fw-bold">קירבת המלוה למטופל</label>
+                            <input type="text" class="form-control patiant-fields" id="affinity" name="affinity">
+                        </div>
+                    </div>
+                </div>
+                <small class="text-danger" id="patiant_error" class="error-message d-none"></small>
+
+                <div class="row mb-3 mt-3" id="id_upload_section">
+                    <div class="col-12 col-md-6 mb-3">
+                        <label class="form-label fw-bold">תאריך לידה של המטופל *</label>
+                        <input type="date" class="form-control" id="patientBirthDate" name="patientBirthDate">
+                        <small class="text-danger" id="patientBirthDate_error" class="error-message d-none"></small>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold">העלאת תעודת זהות של המטופל *</label>
+                        <button type="button" class="btn btn-outline-primary w-100" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                            <i class="bi bi-upload"></i> 
+                            <span id="upload_status_text">לחץ להעלאת תעודת זהות</span>
+                        </button>
+                        <input type="file" id="patientIdFile" name="patientIdFile" accept="image/*,.pdf" class="d-none">
+                        <small class="text-danger" id="patientIdFile_error" class="error-message d-none"></small>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="row mt-4">
+                <div class="col-12 col-md-12">
+                    חשוב לנו שתדעו כמה כללים על האירוח אצלינו:
+                    <div class="rounded border rounded p-2" style="height: 15vh; overflow: auto; font-size: small;">
+                        <b>זמני כניסה ויציאה:</b><br>
+                        <i class="bi bi-check-square"></i> קבלת הסוויטה בימים א&#39; – ה&#39; בין השעות 10:00 ל 18:00,
+                        בהצגת ת.ז. כולל ספח בלבד + סיכום רפואי.<br>
+                        <i class="bi bi-check-square"></i> פינוי הסוויטה בשעה 11:00 (אין אפשרות להישאר מאוחר יותר ללא
+                        תיאום מראש).<br>
+                        <i class="bi bi-check-square"></i> במידה של שחרור ו/או חופשה, יש לפנות את הסוויטה ולהחזיר
+                        מפתח.<br>
+                        <i class="bi bi-check-square"></i> החזרת מפתחות אך ורק לדורי או לאיש צוות אחר בתאום עם דורי
+                        בלבד.<br>
+                        <i class="bi bi-check-square"></i> האירוח הוא לשבוע בלבד. ניתן להאריך על בסיס מקום פנוי בתיאום
+                        עם דורי בלבד.<br><br>
+
+                        <b>כללי התנהגות במתחם:</b><br>
+                        <i class="bi bi-check-square"></i> אין לעשן בתוך הסוויטה<br>
+                        <i class="bi bi-check-square"></i> אין להכניס בע"ח מכל סוג שהוא<br>
+                        <i class="bi bi-check-square"></i> אין להכניס אורחים שלא סוכמו ואושרו מראש<br>
+                        <i class="bi bi-check-square"></i> נא לשמור על השקט לטובת שאר הדיירים בבית רחשי לב<br>
+                        <i class="bi bi-check-square"></i> אין להכניס ציוד חשמלי ללא תיאום ואישור מראש<br>
+                        <i class="bi bi-check-square"></i> יש לשמור על תקינות הציוד בסוויטה ולעשות בו שימוש סביר התואם
+                        את מהותו.<br>
+                        <i class="bi bi-check-square"></i> בכל מקרה של תקלה או נזק שנגרם שלא במתכוון, יש להודיע במיידית
+                        למנהל הבית.<br>
+                        <i class="bi bi-check-square"></i> אין להוציא ציוד מהסוויטה (כריות שמיכות או כל פריט אחר).<br>
+                        <i class="bi bi-check-square"></i> אין להדליק מנגל בשטח המתחם.<br>
+                        <i class="bi bi-check-square"></i> אנו מכבדים את שומרי השבת – אין להשמיע מוזיקה או לחלל שבת
+                        במתחמים הציבוריים.<br>
+                        <i class="bi bi-check-square"></i> אסור להפעיל פלטת שבת או לבשל בסוויטה, במידה ויש צורך חיוני,
+                        ניתן בתיאום והנחיות מראש מדורי,<br>
+                        ובשטח שיאושר בכתב מראש.<br>
+                        <i class="bi bi-check-square"></i> נרות שבת ניתן להדליק במתקן מאושר בלבד ובהשגחת מבוגר כל עוד
+                        הנרות דולקים.<br>
+                        <i class="bi bi-check-square"></i> אין להשאיר ילדים, אפילו לא לרגע, ללא השגחת הורה.<br>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="" id="approvalRead" required>
+                <label class="form-check-label" for="approvalRead">
+                    אני מאשר שקראתי את הכללים
+                </label>
+            </div>
+
+
+            <button type="submit" class="btn btn-primary w-100 mt-2" id="submitBtn">
+                <span id="submitBtnText">שלח</span>
+                <span id="submitBtnSpinner" class="d-none">
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    שולח...
+                </span>
+            </button>
+        </form>
+
+    </div>
+
+    <!-- Modal להעלאת תעודת זהות -->
+    <div class="modal fade" id="uploadModal" tabindex="-1" aria-labelledby="uploadModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="uploadModalLabel">העלאת תעודת זהות של המטופל</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill"></i>
+                        <strong>חשוב:</strong>
+                        <ul class="mt-2 mb-0">
+                            <li>יש להעלות צילום ברור של תעודת הזהות של המטופל</li>
+                            <li>במקרה של קטין (מתחת לגיל 18): יש להעלות צילום של תעודת זהות של ההורה או האפוטרופוס החוקי, בצירוף ספח בו מופיע\ה הקטין\ה</li>
+                            <li>ניתן להעלות תמונה או קובץ PDF</li>
+                            <li>יש לוודא שהקובץ ברור וקריא</li>
+                            
+                        </ul>
+                    </div>
+                    <div class="text-center">
+                        <button type="button" class="btn btn-primary btn-lg" id="triggerFileUpload">
+                            <i class="bi bi-camera-fill"></i> בחר קובץ להעלאה
+                        </button>
+                        <div id="file_preview" class="mt-3 d-none">
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span id="file_name"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal הצלחה -->
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-5">
+                    <div class="mb-4">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                    </div>
+                    <h3 class="text-success mb-3">הטופס נשלח בהצלחה!</h3>
+                    <p class="mb-4">תודה שמילאת את הטופס.</p>
+                    <button type="button" class="btn btn-success btn-lg" data-bs-dismiss="modal">אישור</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal שגיאה -->
+    <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-5">
+                    <div class="mb-4">
+                        <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 5rem;"></i>
+                    </div>
+                    <h3 class="text-danger mb-3">שגיאה!</h3>
+                    <p class="mb-4" id="errorModalMessage">אירעה שגיאה בשליחת הטופס</p>
+                    <button type="button" class="btn btn-danger btn-lg" data-bs-dismiss="modal">סגור</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script>
+        $(document).ready(function () {
+            // הסתרת סקשן העלאת תעודת זהות בהתחלה
+            $('#id_upload_section').hide();
+
+            $('#GuestForm').on('submit', function (event) {
+                event.preventDefault();
+                
+                // בדיקות ולידציה
+                if (!checkValidIdNumber() || !checkSelecttypeGuest() || !checkPatientIdFileUpload()) {
+                    return false;
+                }
+
+                // הקפאת כפתור השליחה
+                $('#submitBtn').prop('disabled', true);
+                $('#submitBtnText').addClass('d-none');
+                $('#submitBtnSpinner').removeClass('d-none');
+                $('#alert_container').empty();
+
+                // הכנת הנתונים לשליחה
+                var formData = new FormData(this);
+
+                // שליחה באמצעות AJAX
+                $.ajax({
+                    url: '',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    dataType: 'json',
+                    success: function(response) {
+                        console.log('Success response:', response);
+                        
+                        // בדיקה אם השליחה הצליחה
+                        if (response.success) {
+                            // הצגת פופאפ הצלחה
+                            $('#successModal').modal('show');
+                            
+                            // איפוס הטופס אחרי 2 שניות
+                            setTimeout(function() {
+                                $('#GuestForm')[0].reset();
+                                $('#guest_div').addClass('d-none');
+                                $('#patiant_area').addClass('d-none');
+                                $('#guest_patiant_area').addClass('d-none');
+                                $('#id_upload_section').hide();
+                                $('#file_preview').addClass('d-none');
+                                $('#upload_status_text').html('לחץ להעלאת תעודת זהות');
+                                $('.error-message').addClass('d-none');
+                                $('.id_number').css('border', '');
+                                $('#patientBirthDate').css('border', '');
+                            }, 2000);
+                        } else {
+                            // אם יש שגיאה בתגובה
+                            var errorMsg = response.error || 'אירעה שגיאה בשליחת הטופס';
+                            $('#errorModalMessage').text(errorMsg);
+                            $('#errorModal').modal('show');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.log('Error response:', xhr, status, error);
+                        
+                        // הצגת פופאפ שגיאה
+                        var errorMsg = 'אירעה שגיאה בשליחת הטופס. אנא נסה שוב.';
+                        
+                        try {
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                errorMsg = xhr.responseJSON.error;
+                            }
+                        } catch(e) {
+                            console.log('Could not parse error response');
+                        }
+                        
+                        $('#errorModalMessage').text(errorMsg);
+                        $('#errorModal').modal('show');
+                    },
+                    complete: function() {
+                        // שחרור כפתור השליחה
+                        $('#submitBtn').prop('disabled', false);
+                        $('#submitBtnText').removeClass('d-none');
+                        $('#submitBtnSpinner').addClass('d-none');
+                    }
+                });
+            });
+
+            // פתיחת בחירת קובץ בלחיצה על הכפתור במודאל
+            $('#triggerFileUpload').on('click', function() {
+                $('#patientIdFile').click();
+            });
+
+            // טיפול בהעלאת קובץ
+            $('#patientIdFile').on('change', function() {
+                var file = this.files[0];
+                if (file) {
+                    $('#file_name').text(file.name);
+                    $('#file_preview').removeClass('d-none');
+                    $('#upload_status_text').html('<i class="bi bi-check-circle-fill text-success"></i> קובץ הועלה: ' + file.name);
+                    $('#patientIdFile_error').addClass('d-none');
+                }
+            });
+
+
+
+
+            let hospital_ward_option = ['אונקולוגיה ילדים', 'אונקולוגיה מבוגרים', 'נפגעי מלחמת חרבות ברזל'];
+            $("#GuestHospitalWard").autocomplete({
+                source: hospital_ward_option,
+                minLength: 0
+            }).on('focus', function () {
+                $("#GuestHospitalWard").autocomplete("search", $("#GuestHospitalWard").val());
+            });
+
+            $("#hospitalWard").autocomplete({
+                source: hospital_ward_option,
+                minLength: 0
+            }).on('focus', function () {
+                $("#hospitalWard").autocomplete("search", $("#hospitalWard").val());
+            });
+
+            let affinity_options = ["הורה", "בן/בת זוג","אח/ות", "ילד/ה", "קרוב משפחה", "ידיד"];
+            $("#affinity").autocomplete({
+                source: affinity_options,
+                minLength: 0
+            }).on('focus', function () {
+                $("#affinity").autocomplete("search", $("#affinity").val());
+            });
+
+
+            $('input[name="type_reg"]').change(function () {
+                $('#typeGuest_error').hide();
+                let selectedValue = $('input[name="type_reg"]:checked').val();
+
+
+                if (selectedValue == '1') {
+                    $("#guest_div").removeClass('d-none');
+                }
+                else {
+                    $("#guest_div").addClass('d-none');
+                    $('#id_upload_section').hide();
+                    // איפוס הקובץ ותאריך הלידה
+                    $('#patientIdFile').val('');
+                    $('#patientBirthDate').val('');
+                    $('#file_preview').addClass('d-none');
+                    $('#upload_status_text').html('לחץ להעלאת תעודת זהות');
+                    $('#patientIdFile_error').addClass('d-none');
+                    $('#patientBirthDate_error').addClass('d-none');
+                }
+            })
+
+            $('input[name="type_guest"]').change(function () {
+                $('#typeGuest_error').addClass('d-none');
+                let selectedValue = $('input[name="type_guest"]:checked').val();
+
+
+                if (selectedValue == '2') {
+                    $("#patiant_area").removeClass('d-none');
+                    $("#guest_patiant_area").addClass('d-none');
+                    $('#id_upload_section').show(); // הצגת סקשן העלאת תעודת זהות
+                }
+                else {
+                    $("#patiant_area").addClass('d-none');
+                    $("#guest_patiant_area").removeClass('d-none');
+                    $('#id_upload_section').show(); // הצגת סקשן העלאת תעודת זהות
+                }
+            })
+        });
+
+        function checkValidIdNumber() {
+            $('.id_number').css('border', '');
+            $('.error-message').addClass('d-none');
+
+            var isValid = true;
+
+            var isIsraeliID = $("#IdNumberOption").is(':checked');
+
+            if (isIsraeliID) {
+                var idNumber = $('#IdNumber').val();
+
+                if (!isValidIsraeliID(idNumber)) {
+                    isValid = false;
+                    $('#IdNumber').css('border', '1px solid red');
+                    $('#errorModalMessage').text('יש להזין מספר זהות תקין');
+                    $('#errorModal').modal('show');
+                }
+            }
+
+            var isIsraeliIDpatiant = $("#patiantIdNumberOption").is(':checked') && $("#companion").is(':checked');
+
+            if (isIsraeliIDpatiant) {
+                var idNumber = $('#patiantIdNumber').val();
+
+                if (!isValidIsraeliID(idNumber)) {
+                    isValid = false;
+                    $('#patiantIdNumber').css('border', '1px solid red');
+                    $('#errorModalMessage').text('יש להזין מספר זהות תקין למטופל');
+                    $('#errorModal').modal('show');
+                }
+            }
+
+            return isValid;
+        }
+
+        function checkSelecttypeGuest() {
+            $('.error-message').addClass('d-none');
+
+            var isValid = true;
+            let atLeastOneChecked = $('input[name="type_reg"]:checked').length > 0;
+            if (!atLeastOneChecked) {
+                isValid = false;
+                $('#errorModalMessage').text('יש לבחור סיבת רישום');
+                $('#errorModal').modal('show');
+                return false;
+            }
+
+            let type_reg = $('input[name="type_reg"]:checked').val();
+            if (type_reg == '1') {
+                let atLeastOneChecked = $('input[name="type_guest"]:checked').length > 0;
+                if (!atLeastOneChecked) {
+                    isValid = false;
+                    $('#errorModalMessage').text('יש לבחור סוג אירוח');
+                    $('#errorModal').modal('show');
+                    return false;
+                }
+
+                let type_guest = $('input[name="type_guest"]:checked').val();
+                if (type_guest == '1') {
+                    let hasError = false;
+                    $('.guest-patiant-fields').each(function () {
+                        if ($(this).val().length == 0) {
+                            hasError = true;
+                        }
+                    });
+                    if (hasError) {
+                        isValid = false;
+                        $('#errorModalMessage').text('יש להזין את פרטי הטיפול');
+                        $('#errorModal').modal('show');
+                        return false;
+                    }
+                }
+                if (type_guest == '2') {
+                    let hasError = false;
+                    $('.patiant-fields').each(function () {
+                        if ($(this).val().length == 0) {
+                            hasError = true;
+                        }
+                    });
+                    if (hasError) {
+                        isValid = false;
+                        $('#errorModalMessage').text('יש להזין את פרטי המטופל');
+                        $('#errorModal').modal('show');
+                        return false;
+                    }
+                }
+            }
+
+            return isValid;
+        }
+
+        function checkPatientIdFileUpload() {
+            var isValid = true;
+
+            // בדיקה אם נבחר אירוח בבית הילד
+            let type_reg = $('input[name="type_reg"]:checked').val();
+            if (type_reg == '1') {
+                // בדיקה אם נבחר סוג אירוח (מטופל או מלווה)
+                let type_guest = $('input[name="type_guest"]:checked').val();
+                if (type_guest == '1' || type_guest == '2') {
+                    // בדיקה אם הוזן תאריך לידה
+                    var birthDate = $('#patientBirthDate').val();
+                    if (!birthDate) {
+                        isValid = false;
+                        $('#patientBirthDate').css('border', '1px solid red');
+                        $('#errorModalMessage').text('חובה להזין תאריך לידה של המטופל');
+                        $('#errorModal').modal('show');
+                        return false;
+                    } else {
+                        $('#patientBirthDate').css('border', '');
+                    }
+                    
+                    // בדיקה אם הועלה קובץ
+                    var file = $('#patientIdFile')[0].files[0];
+                    if (!file) {
+                        isValid = false;
+                        $('#errorModalMessage').text('חובה להעלות צילום תעודת זהות של המטופל');
+                        $('#errorModal').modal('show');
+                        
+                        // גלילה לשדה ההעלאה
+                        $('html, body').animate({
+                            scrollTop: $('#id_upload_section').offset().top - 100
+                        }, 500);
+                        return false;
+                    }
+                }
+            }
+
+            return isValid;
+        }
+
+
+        function isValidIsraeliID(id) {
+            var id = String(id).trim(); if (id.length > 9 || id.length < 5 || isNaN(id)) return false;
+
+            id = id.length < 9 ? ("00000000" + id).slice(-9) : id;
+
+            return Array
+                .from(id, Number)
+                .reduce((counter, digit, i) => {
+                    const step = digit * ((i % 2) + 1);
+                    return counter + (step > 9 ? step - 9 : step);
+                }) % 10 === 0;
+        }
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="heb" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="/dashboard/media/logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        @font-face {
+            font-family: 'Almoni Tzar ML v5 AAA bold';
+            src: url('/dashboard/media/almoni-tzar-bold-aaa.woff2') format('woff2');
+        }
+
+        @font-face {
+            font-family: 'Almoni Tzar ML v5 AAA';
+            src: url('/dashboard/media/almoni-tzar-regular-aaa.woff2') format('woff2');
+        }
+
+        body {
+            margin: 0;
+        }
+
+        #load_area {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            background-image: url('/dashboard/media/house_door.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: flex;
+            align-items: center;
+        }
+
+        #house_number_area {
+            position: absolute;
+            top: 20vh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 152.183px;
+            height: 152.183px;
+            filter: drop-shadow(0px 4px 4px rgba(0, 0, 0, 0.25));
+            animation: rotate 3s linear forwards;
+        }
+
+        @keyframes rotate {
+            0% {
+                transform: translateX(-50%) rotate(0deg);
+            }
+
+            100% {
+                transform: translateX(-50%) rotate(360deg);
+            }
+        }
+
+        #house_number_area circle {
+            stroke-dasharray: 480;
+            stroke-dashoffset: 480;
+            animation: draw 2s linear forwards;
+        }
+
+        @keyframes draw {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        #house_number {
+            position: absolute;
+            top: 22vh;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 117px;
+            color: #FFF;
+            text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+            font-family: "Almoni Tzar ML v5 AAA";
+            font-size: 79.275px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: normal;
+            text-align: center;
+        }
+
+        .house-description-area-loader {
+            position: absolute;
+            top: 44.5vh;
+            left: 50%;
+            width: 100%;
+            text-align: center;
+            text-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+            line-height: 100%;
+            transform: translateX(-50%);
+        }
+
+
+        .text {
+            color: #FFF;
+            font-family: "Almoni Tzar ML v5 AAA";
+            font-style: normal;
+            letter-spacing: 0.3vw;
+        }
+
+
+        .house-description-main {
+            font-size: 48px;
+            font-weight: 700;
+        }
+
+        .house-description-sub {
+            font-size: 30px;
+            font-weight: 400;
+        }
+
+        .house-description-loader {
+            line-height: 100%;
+        }
+
+        .house-description-body {
+            line-height: 80%;
+        }
+
+        .logo {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        #hostings_area {
+            position: relative;
+            width: 100%;
+            min-height: 100vh;
+            background: #002C3C;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .house-image {
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+
+        #hosting_details {
+            width: 90%;
+        }
+
+        .house-number-orange {
+            color: #EBA611;
+        }
+
+        .columns-warp {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .column-end,
+        .column-start {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        .column-start {
+            width: 70%;
+        }
+
+        .column-end {
+            width: 30%;
+            align-items: end;
+        }
+
+
+        .hosting-status {
+            border-radius: 6px;
+            background: #EBA611;
+            display: inline-flex;
+            width: 19%;
+            height: 30px;
+            padding: 2% 4%;
+            justify-content: center;
+            align-items: center;
+        }
+        .hosting-status.heb {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+        }
+       
+
+        .hosting-status-text {
+            color: #FFF;
+            font-size: 22px;
+            font-weight: 700;
+            line-height: normal;
+        }
+
+        .hosting-area {
+            position: relative;
+            border-radius: 16px;
+            border-bottom: 6px solid #EBA611;
+            background: #004E69;
+            height: 20vh;
+            width: 100%;
+            margin-top: 2vh;
+            margin-bottom: 2vh;
+        }
+
+        .goust-area {
+            position: absolute;
+            top: 3.6vh;
+            width: 100%;
+            text-align: center;
+        }
+
+        .goust-name {
+            font-size: 34px;
+            font-weight: 700;
+            line-height: 100%;
+        }
+
+        .hospital-ward {
+            color: rgba(255, 255, 255, 0.60);
+            font-size: 22px;
+            font-weight: 400;
+            line-height: 100%;
+        }
+
+        .border-split {
+            position: absolute;
+            top: 12vh;
+            width: 100%;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.60);
+        }
+
+        .hosting-dates-area {
+            position: absolute;
+            top: 14vh;
+            width: 100%;
+            text-align: center;
+        }
+
+        .d-none {
+            display: none;
+        }
+
+        .before-dates {
+            font-size: 30px;
+            font-weight: 400;
+            line-height: 100%;
+        }
+
+        .hosting-dates {
+            font-size: 30px;
+            font-weight: 700;
+            line-height: 100%;
+        }
+
+        .hosting-dates-area .eng{
+            font-size: 25px;
+        }
+
+        .fade-in-element {
+            opacity: 0;
+            transition-property: opacity, transform;
+            transform: translate3d(0, 34px, 0);
+            transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+            transition-duration: .5s;
+        }
+
+        .fade-in-element.show {
+            opacity: 1;
+            transform: none;
+        }
+    </style>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .btn-group {
+            display: inline-flex;
+            border-radius: 0.375rem;
+            overflow: hidden;
+
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            background-color: #dee2e6;
+            color: #000;
+            transition: background-color 0.2s ease-in-out;
+        }
+
+        .btn:hover {
+            background-color: #cfd3d6;
+        }
+
+        .btn.active {
+            background-color: #6c757d;
+            color: #fff;
+        }
+
+        .btn:focus {
+            outline: none;
+        }
+
+        .btn:first-child {
+            border-right: 1px solid #ced4da;
+        }
+
+        .btn:last-child {
+            border-left: 1px solid #ced4da;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="load_area">
+
+        <svg id="house_number_area" width="166" height="166" viewBox="0 0 166 166" fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <circle cx="83" cy="83" r="76" stroke="#FFF" stroke-width="4" stroke-linecap="round" />
+        </svg>
+
+        <span id="house_number">{{ house.description }}</span>
+        <div class="house-description-area-loader">
+            <span class="house-description-loader text house-description-sub">{{ house.page_description1 }}</span>
+            <br>
+            <span class="house-description-loader text house-description-main">{{ house.page_description2 }}</span>
+        </div>
+        <img class="logo" style="bottom: 10vh;" src="/dashboard/media/logo_white.svg">
+    </div>
+
+    <div id="hostings_area">
+        <!-- המיקום יהיה קבוע בצד שמאל של הדף קצת רחוק מלמעלה וקצת משמאל -->
+        <div class="btn-group" style="position: absolute; top: 20px; left: 20px;" role="group" aria-label="בחירה">
+            <button type="button" class="btn active" data-value="1">עב</button>
+            <button type="button" class="btn" data-value="2">EN</button>
+        </div>
+        <img class="house-image" src="/dashboard/media/house.png">
+        <img class="logo" style="top: 80px;" src="/dashboard/media/logo_white.svg">
+        <div id="hosting_details">
+            <div class="heb">
+                <span class="house-number-orange text house-description-sub ">{{ house.description }}</span>
+            </div>
+            <div class="eng d-none" dir="ltr" style="text-align: left;">
+                <span class="house-number-orange text house-description-sub ">{{ house.description }}</span>
+            </div>
+            <div class="columns-warp heb">
+                <div class="column-start">
+                    <span class="house-description-body text house-description-sub">{{ house.page_description1 }}</span>
+                    <span class="house-description-body text house-description-main">{{ house.page_description2 }}</span>
+                </div>
+                {% if house.current_hosting %}
+                <div class="column-end hosting-status">
+                    <span class="hosting-status-text text">מאוכלס</span>
+                </div>
+                {% endif %}
+            </div>
+            <div class="columns-warp eng d-none" dir="ltr" style="text-align: left;">
+                <div class="column-start">
+                    <span class="house-description-body text house-description-sub">Guests in this apartment</span>
+                    <span class="house-description-body text house-description-main">{{ house.description }}</span>
+                </div>
+                {% if house.current_hosting %}
+                <div class="column-end hosting-status">
+                    <span class="hosting-status-text text">Occupied</span>
+                </div>
+                {% endif %}
+            </div>
+            {% for hosting in hostings %}
+            <div class="hosting-area fade-in-element">
+                <div class="goust-area">
+                    <span class="goust-name text heb">{{ hosting.guest_description }}</span>
+                    <span class="goust-name text eng d-none">{{ hosting.guest_description_eng }}</span>
+                    <br>
+                    <span class="hospital-ward text heb">{{ hosting.hospital_ward}}</span>
+                    <span class="hospital-ward text eng d-none">{{ hosting.hospital_ward_eng }}</span>
+                </div>
+                <div class="border-split"></div>
+                <div class="hosting-dates-area">
+                    {% if hosting.id in current_hosting_ids %}
+                    <span class="before-dates text eng d-none">start date: </span>
+                    <span class="before-dates text heb">תאריך כניסה: </span>
+                    <span class="hosting-dates text">{{ hosting.lodging_start }}</span>
+                    {% else %}
+                    <span class="before-dates text eng d-none">hosting period: </span>
+                    <span class="before-dates text heb">תקופת אירוח: </span>
+                    <span class="hosting-dates text">{{ hosting.lodging_start }} - {{ hosting.lodging_end }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+        setTimeout(() => {
+            $("#load_area").hide();
+            $("#hostings_area").css("display", "flex");
+        }, 3000);
+
+        $(window).scroll(function () {
+            $(".fade-in-element").each(function () {
+                let topOfElement = $(this).offset().top;
+                let bottomOfElement = $(this).offset().top + $(this).outerHeight();
+                let bottomOfScreen = $(window).scrollTop() + $(window).innerHeight();
+                let topOfScreen = $(window).scrollTop();
+                let offset = 50;
+
+                if (window.matchMedia("only screen and (max-width: 767px)").matches) {
+                    offset = 0;
+                }
+
+                if ((bottomOfScreen > topOfElement + offset) && (topOfScreen < bottomOfElement)) {
+                    $(this).addClass('show');
+                } else {
+                    $(this).removeClass('show');
+                }
+            });
+        }).scroll();
+
+        $('.btn-group .btn').on('click', function () {
+            $('.btn-group .btn').removeClass('active');
+            $(this).addClass('active');
+
+            // פעולה נוספת – לדוגמה:
+            let value = $(this).data('value');
+            if (value == 1) {
+                $(".hosting-dates").removeClass('eng');
+                $('.heb').removeClass('d-none');
+                $('.eng').addClass('d-none');
+            } else {
+                $(".hosting-dates").addClass('eng');
+                $('.heb').addClass('d-none');
+                $('.eng').removeClass('d-none');
+            }
+        });
+    });
+
+</script>
+
+</html>

@@ -1,0 +1,1082 @@
+{% load custom_filters %}
+<style>
+    .disabled-link {
+        color: gray;
+        pointer-events: none;
+        cursor: default;
+    }
+</style>
+<div class="modal-header">
+    {% if type_view == 'edit' %}
+    <h5 class="modal-title">{{ details.name }}</h5>
+    {% else %}
+    <h5 class="modal-title">הוספת אורח חדש</h5>
+    {% endif %}
+    <div class="btn-block">
+        {% if type_view == 'edit' %}
+        <span class="fs-4">
+            <i class="bi bi-intersect text-secondary mx-1 cursor-pointer" data-toggle="tooltip"
+                title="מזג אל איש קשר אחר" id="merge_person"></i>
+            <!-- <i class="bi bi-trash text-secondary mx-1 cursor-pointer" data-toggle="tooltip" title="מחק אורח"
+                id="delete_person"></i>
+                 -->
+        </span>
+        {% endif %}
+        <button type="button" class="btn-close btn-block" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+
+</div>
+{% if type_view == 'edit' %}
+<input type="text" hidden id="person_id" value="{{ details.id }}">
+{% endif %}
+<div class="modal-body" id="person_modal">
+
+    <div class="row mb-2">
+        <div class="col-4">
+            {% if type_view == 'edit' %}
+            <label for="id_number">מספר זהות \ דרכון</label>
+            <input type="text" class="form-control form-control-sm person-details" id="id_number" disabled
+                value="{{ details.id_number }}">
+            {% else %}
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="id_number_or_passport" id="id_number_option" checked>
+                <label class="form-check-label" for="id_number_option">מספר זהות</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="id_number_or_passport" id="passport_option">
+                <label class="form-check-label" for="passport_option">דרכון</label>
+            </div>
+            <input type="text" class="form-control form-control-sm person-details" id="id_number"
+                placeholder="מספר זהות">
+            {% endif %}
+
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-4">
+            <label for="first_name">שם פרטי</label>
+            <input type="text" class="form-control form-control-sm person-details" id="first_name" placeholder="שם פרטי"
+                value="{{ details.first_name }}">
+        </div>
+        <div class="col-4">
+            <label for="last_name">שם משפחה</label>
+            <input type="text" class="form-control form-control-sm person-details" id="last_name" placeholder="שם משפחה"
+                value="{{ details.last_name }}">
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-4">
+            <label for="first_name_eng">שם פרטי אנגלית</label>
+            <input type="text" class="form-control form-control-sm person-details" id="first_name_eng"
+                placeholder="שם פרטי אנגלית" value="{{ details.first_name_eng }}">
+        </div>
+        <div class="col-4">
+            <label for="last_name_eng">שם משפחה אנגלית</label>
+            <input type="text" class="form-control form-control-sm person-details" id="last_name_eng"
+                placeholder="שם משפחה אנגלית" value="{{ details.last_name_eng }}">
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-4">
+            <div class="form-group">
+                <label for="person_phone">טלפון</label>
+                <input type="text" class="form-control form-control-sm person-details" id="person_phone"
+                    placeholder="טלפון" value="{{ details.phone }}">
+            </div>
+        </div>
+        <div class="col-4">
+            <label for="email">אימייל</label>
+            <input type="text" class="form-control form-control-sm person-details" id="email" placeholder="אימייל"
+                value="{{ details.email }}">
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-4">
+            <label for="birth_date">תאריך לידה</label>
+            <input type="date" class="form-control form-control-sm person-details" id="birth_date"
+                value="{{ details.birth_date }}">
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-4">
+            <label for="person_name">כתובת</label>
+            <input type="text" class="form-control form-control-sm person-details" id="address" autocomplete="off"
+                placeholder="כתובת" value="{{ details.address }}">
+        </div>
+        <div class="col-2">
+            <label for="house_number">מספר בית</label>
+            <input type="text" class="form-control form-control-sm person-details" autocomplete="off" id="house_number"
+                placeholder="מספר בית" value="{{ details.house_number }}">
+        </div>
+        <div class="col-3">
+            <label for="city">עיר</label>
+            <input type="text" class="form-control form-control-sm person-details" id="city" autocomplete="off"
+                placeholder="עיר" value="{{ details.city }}">
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-4">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="is_staff" {% if type_view == 'edit' and not details.role == "אורח" %} checked {% endif %}>
+                <label class="form-check-label" for="is_staff">
+                    איש צוות
+                </label>
+            </div>
+        </div>
+        <div class="col-4">
+            <div id="role_div" class="{% if details.role == 'אורח' or not type_view == 'edit' %} d-none {% endif %}>">
+                <label for="role">תפקיד</label>
+                <input type="text" class="form-control form-control-sm person-details" id="role" placeholder="תפקיד"
+                    value="{{ details.role }}">
+            </div>
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-6">
+            <label for="note">הערה</label>
+            <textarea id="note" class="form-control">{{ details.note}}</textarea>
+        </div>
+    </div>
+
+    {% if type_view == 'edit' %}
+    <div class="row mb-2">
+        <div class="col-6">
+            <label class="form-label fw-bold">צילום תעודת זהות</label>
+            <div class="border rounded p-2">
+                <div id="id_file_status">
+                    {% if details.id_number_file %}
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="bi bi-file-earmark-check text-success"></i>
+                            <span class="text-success">קובץ קיים</span>
+                        </div>
+                        <div>
+                            <a href="/media/{{ details.id_number_file }}" target="_blank" class="btn btn-sm btn-outline-primary me-1" title="צפה בקובץ">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="/media/{{ details.id_number_file }}" download class="btn btn-sm btn-outline-success me-1" title="הורד קובץ">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-warning me-1" id="replace_id_file_btn" title="החלף קובץ">
+                                <i class="bi bi-arrow-repeat"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="delete_id_file_btn" title="מחק קובץ">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted">
+                        <i class="bi bi-file-earmark-x"></i>
+                        <span>אין קובץ</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div id="id_file_upload_section" class="{% if details.id_number_file %}d-none{% endif %} mt-2">
+                    <input type="file" id="id_number_file_input" accept="image/*,.pdf" class="form-control form-control-sm">
+                    <div class="mt-2">
+                        <button type="button" class="btn btn-sm btn-primary" id="upload_id_file_btn">
+                            <i class="bi bi-upload"></i> העלה קובץ
+                        </button>
+                        {% if details.id_number_file %}
+                        <button type="button" class="btn btn-sm btn-secondary" id="cancel_upload_btn">ביטול</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    {% if type_view == 'edit' %}
+    <ul class="nav nav-tabs mt-2">
+        {% if is_admin or user.allow_houses %}
+        <li class="nav-item">
+            <a id="hostings_person_tab" class="nav-link nav-link-tabs active person-child-tab cursor-pointer"
+                data-child-name="hostings" data-toggle="tab">אירוחים</a>
+        </li>
+        {% endif %}
+        <li class="nav-item">
+            <a class="nav-link nav-link-tabs  person-child-tab cursor-pointer {% if not is_admin and not user.allow_houses %} active {% endif %}"
+                data-child-name="cards" data-toggle="tab">כרטיסים</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link nav-link-tabs person-child-tab cursor-pointer" data-child-name="phones"
+                data-toggle="tab">פלאפונים</a>
+        </li>
+        <li class="nav-item">
+            <a id="peremission_tab" class=" nav-link nav-link-tabs person-child-tab cursor-pointer"
+                data-child-name="permissions" data-toggle="tab">הרשאות</a>
+        </li>
+        {% if is_admin or user.allow_locks_records %}
+        <li class="nav-item">
+            <a class="nav-link nav-link-tabs person-child-tab cursor-pointer" data-child-name="records"
+                data-toggle="tab">רשומות נעילה</a>
+        </li>
+        {% endif %}
+        {% if is_admin or user.allow_hostings_ichilov %}
+        <li class="nav-item">
+            <a class="nav-link nav-link-tabs person-child-tab cursor-pointer" data-child-name="hostings_ichilov"
+                data-toggle="tab">אירוחים - איכילוב</a>
+        </li>
+        {% endif %}
+    </ul>
+    <div class="tab-content d-flex justify-content-center align-items-center" id="child_content" style="height: 30vh;
+                overflow-y: auto"></div>
+    {% endif %}
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            {% if type_view == 'edit' %}
+            <button class="btn btn-outline-secondary btn-sm mt-2" id="add_child_btn" data-child-name="hostings">
+                <i class="bi bi-plus-circle"></i>
+                <span id="add_child_btn_text"><i class="bi bi-plus-circle"></i> הוסף אירוח</span>
+            </button>
+            {% endif %}
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary" id="save_person_btn">שמור</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+        </div>
+    </div>
+
+
+</div>
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    var ascending = true;
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+        get_person_role();
+        if ($("#person_id").length) {
+            if ($("#hostings_person_tab").length) get_person_list_child('hostings');
+            else get_person_list_child('cards');
+            check_view_permissions();
+            $('#delete_person').click(delete_person);
+            $('#merge_person').click(merge_person);
+            $("#send_feedback").click(send_feedback);
+            $('.person-child-tab').click(function () {
+                let child_name = $(this).data('child-name');
+                get_person_list_child(child_name);
+                $('.nav-link-tabs').removeClass('active');
+                $(this).addClass('active');
+
+                $(".card-list").removeClass('actice show');
+                $("#" + child_name).addClass('active show')
+            });
+
+
+            $('#add_child_btn').click(function () {
+                let child_name = $(this).data('child-name');
+                add_child(child_name);
+
+            });
+        }
+
+        $("#is_staff").change(function () {
+            if ($("#is_staff").is(":checked")) {
+                $("#role").val('');
+                $("#role_div").removeClass('d-none');
+            }
+            else {
+                $("#role").val('אורח');
+                $("#role_div").addClass('d-none');
+            }
+        })
+
+        $('#save_person_btn').click(save_person);
+
+        // טיפול בהעלאת קובץ תעודת זהות
+        $('#replace_id_file_btn').click(function() {
+            $('#id_file_upload_section').removeClass('d-none');
+        });
+
+        $('#cancel_upload_btn').click(function() {
+            $('#id_file_upload_section').addClass('d-none');
+            $('#id_number_file_input').val('');
+        });
+
+        $('#upload_id_file_btn').click(upload_id_file);
+        
+        $('#delete_id_file_btn').click(delete_id_file);
+    });
+
+    function upload_id_file() {
+        let file = $('#id_number_file_input')[0].files[0];
+        
+        if (!file) {
+            alert_message('יש לבחור קובץ להעלאה', 'error');
+            return;
+        }
+
+        let person_id = $("#person_id").val();
+        let formData = new FormData();
+        formData.append('id_number_file', file);
+        formData.append('person_id', person_id);
+
+        $.ajax({
+            url: '/dashboard/upload_person_id_file',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert_message('הקובץ הועלה בהצלחה', 'ok');
+                    
+                    // עדכון התצוגה
+                    let file_path = response.file_path;
+                    $('#id_file_status').html(`
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-file-earmark-check text-success"></i>
+                                <span class="text-success">קובץ קיים</span>
+                            </div>
+                            <div>
+                                <a href="/media/${file_path}" target="_blank" class="btn btn-sm btn-outline-primary me-1" title="צפה בקובץ">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="/media/${file_path}" download class="btn btn-sm btn-outline-success me-1" title="הורד קובץ">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                                <button type="button" class="btn btn-sm btn-outline-warning me-1" id="replace_id_file_btn" title="החלף קובץ">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger" id="delete_id_file_btn" title="מחק קובץ">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `);
+                    
+                    $('#id_file_upload_section').addClass('d-none');
+                    $('#id_number_file_input').val('');
+                    
+                    // רענון האירועים
+                    $('#replace_id_file_btn').click(function() {
+                        $('#id_file_upload_section').removeClass('d-none');
+                    });
+                    $('#delete_id_file_btn').click(delete_id_file);
+                } else {
+                    alert_message('שגיאה בהעלאת הקובץ: ' + response.error, 'error');
+                }
+            },
+            error: function(xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                } else {
+                    alert_message('שגיאה בהעלאת הקובץ', 'error');
+                }
+            }
+        });
+    }
+
+    async function delete_id_file() {
+        try {
+            await confirmation_modal('האם הנך בטוח שברצונך למחוק את הקובץ?');
+            
+            let person_id = $("#person_id").val();
+            
+            $.ajax({
+                url: '/dashboard/delete_person_id_file',
+                type: 'POST',
+                data: JSON.stringify({ person_id: person_id }),
+                dataType: 'json',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert_message('הקובץ נמחק בהצלחה', 'ok');
+                        
+                        // עדכון התצוגה
+                        $('#id_file_status').html(`
+                            <div class="text-center text-muted">
+                                <i class="bi bi-file-earmark-x"></i>
+                                <span>אין קובץ</span>
+                            </div>
+                        `);
+                        
+                        $('#id_file_upload_section').removeClass('d-none');
+                    } else {
+                        alert_message('שגיאה במחיקת הקובץ: ' + response.error, 'error');
+                    }
+                },
+                error: function(xhr, textStatus, errorThrown) {
+                    if (xhr.status === 401) {
+                        window.location.href = '/login';
+                    } else {
+                        alert_message('שגיאה במחיקת הקובץ', 'error');
+                    }
+                }
+            });
+        } catch (error) {
+            // משתמש ביטל את המחיקה
+        }
+    }
+
+    function check_view_permissions() {
+        let person_id = $("#person_id").val();
+        $.ajax({
+            url: 'get_person_permission_objects/' + person_id,
+            type: 'GET',
+            success: function (data) {
+                cards = data.cards;
+                phones = data.phones;
+                if (cards.length == 0 && phones.length == 0) {
+                    $("#peremission_tab").addClass('disabled-link');
+                }
+                else {
+                    $("#peremission_tab").removeClass('disabled-link');
+                }
+            }
+        });
+    }
+
+    function get_person_role() {
+        $.ajax({
+            url: "get_role_options",
+            type: "GET",
+            success: function (data) {
+
+                autocomplete("#role", data.roles);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status  === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function isValidIsraeliID(id) {
+        var id = String(id).trim();
+        if (id.length > 9 || id.length < 5 || isNaN(id)) return false;
+
+        id = id.length < 9 ? ("00000000" + id).slice(-9) : id;
+
+        return Array
+            .from(id, Number)
+            .reduce((counter, digit, i) => {
+                const step = digit * ((i % 2) + 1);
+                return counter + (step > 9 ? step - 9 : step);
+            }) % 10  === 0;
+    }
+
+    async function save_person() {
+
+
+        let id_number = $("#id_number").val();
+        let first_name = $("#first_name").val();
+        let last_name = $("#last_name").val();
+        let first_name_eng = $("#first_name_eng").val();
+        let last_name_eng = $("#last_name_eng").val();
+        let phone = $("#person_phone").val();
+        let email = $("#email").val();
+        let role = $("#role").val();
+        let address = $("#address").val();
+        let house_number = $("#house_number").val();
+        let city = $("#city").val();
+        let note = $("#note").val();
+        let birth_date = $("#birth_date").val();
+
+        data = {
+            "id_number": id_number,
+            "first_name": first_name,
+            "last_name": last_name,
+            "first_name_eng": first_name_eng,
+            "last_name_eng": last_name_eng,
+            "person_phone": phone,
+            "email": email,
+            "role": role,
+            "address": address,
+            "house_number": house_number,
+            "city": city,
+            "note": note,
+            "birth_date": birth_date
+        }
+
+        if ($("#person_id").length) {
+            data['person_id'] = $("#person_id").val()
+        }
+        else {
+
+            if (id_number.length == 0) {
+                alert_message('יש להזין מספר זהות', 'error');
+                return;
+            }
+
+            if ($("#id_number_option").is(':checked')) {
+                if (!isValidIsraeliID(id_number)) {
+                    alert_message('יש להזין מספר זהות ישראלי תקין', 'error');
+                    return;
+                }
+            }
+
+            if (first_name.length == 0 || last_name.length == 0) {
+                alert_message('יש להזין שם אורח', 'error');
+                return;
+            }
+
+            if (phone.length == 0) {
+                await confirmation_modal("האם לשמור בלא מספר פלאפון?")
+            }
+
+            if (email.length == 0) {
+                await confirmation_modal("האם לשמור בלא כתובת אימייל?")
+            }
+            else {
+                if (!email.includes('@') || !email.includes('.')) {
+                    alert_message('יש להזין אימייל תקין', 'error');
+                    return;
+                }
+            }
+
+
+        }
+
+        $.ajax({
+            url: "save_person",
+            type: "POST",
+            data: JSON.stringify(data),
+            dataType: 'json',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function (data) {
+                if ($("#person_id").length) {
+                    alert_message('השינויים נשמרו בהצלחה', 'ok');
+                    $('#modal-lg').modal('hide');
+                }
+                else {
+                    alert_message('האורח נוסף בהצלחה', 'ok');
+                    let person_id = data.person_id;
+                    loadContent('#lg-modal-content', 'person/' + person_id);
+                    $('#modal-lg').modal('show');
+                    loadContent('#md-modal-content', 'add_card/' + person_id);
+                    $('#modal-md').modal('show');
+                }
+                refresh_persons_windows();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status  === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    async function delete_person() {
+        let person_id = $("#person_id").val();
+        try {
+            await confirmation_modal('האם הנך בטוח שברצונך למחוק את האורח?');
+
+            $.ajax({
+                url: "delete_person/" + person_id,
+                type: "GET",
+                success: function (response) {
+                    if (response.success) {
+                        alert_message("האורח נשלח למחיקה", "ok");
+                        $('#modal-lg').modal('hide');
+                        refresh_persons_windows();
+                        locks_to_sync = response.locks_to_sync
+                        console.log(locks_to_sync)
+                        transmission(locks_to_sync);
+                    }
+                    else {
+                        alert_message(response.error, "error");
+                    }
+                },
+                error: function () {
+                    if (xhr.status  === 401) {
+                        window.location.href = '/login';
+                    }
+                    else {
+                        alert_message("ארעה שגיאה במחיקת האורח", "error");
+                    }
+                }
+            });
+        } catch (error) {
+        }
+    }
+
+
+
+    async function delete_child_item() {
+        let child_id = $(this).data('id');
+        let child_name = $(this).data('child-name');
+        try {
+            let lock_id = $("#lock_id").val();
+
+            let child_type = {
+                "cards": "כרטיס",
+                "permissions": "הרשאה",
+                "phones": "פלאפון"
+            }
+
+            await confirmation_modal('האם הנך בטוח שברצונך למחוק את ה' + child_type[child_name] + '?');
+
+            $.ajax({
+                url: "delete_person_child/" + child_name + "/" + child_id,
+                type: "GET",
+                success: function (response) {
+                    if (response.success) {
+                        get_person_list_child(child_name);
+                        refresh_persons_windows();
+                        check_view_permissions();
+                        locks_ids_changed = response.locks_to_sync
+                        switch (child_name) {
+                            case 'cards':
+                                alert_message("הכרטיס נשלח למחיקה", "ok");
+                                break;
+                            case 'permissions':
+                                alert_message("ההרשאה נשלחה למחיקה", 'ok');
+                                break;
+                            case 'phones':
+                                alert_message("הפלאפון נמחק בהצלחה", 'ok');
+                        }
+                        transmission(locks_ids_changed);
+                    }
+                    else {
+                        alert_message(response.error, 'error')
+                    }
+                },
+                error: function () {
+                    if (xhr.status  === 401) {
+                        window.location.href = '/login';
+                    }
+                    else {
+                        alert_message("ארעה שגיאה במחיקת " + child_type[child_name], "error")
+                    }
+                }
+            });
+        } catch (error) {
+        }
+    }
+
+
+    function get_person_list_child(child_name, set_empty = true) {
+        let child_list_div = $('#child_content');
+        if (set_empty) child_list_div.empty();
+
+        let childs_type = {
+            hostings: {
+                item: 'אירוח',
+                items: 'אירוחים',
+                fields: [
+                    { "name": 'lodging_start_formater', "description": 'תאריך התחלה' },
+                    { "name": 'lodging_end_formater', "description": 'תאריך סיום' },
+                    { "name": 'house_description', "description": 'דירה' },
+                    { "name": 'lodging_status', "description": 'סטטוס' },
+                    { "name": "lodging_partner", "description": "מטופל/מלווה" },
+                    { "name": 'hospital_ward', "description": 'מחלקה' },
+                    { "name": "actions", "description": '' }
+                ],
+                symbol_fill: '<i class="bi bi-suitcase2-fill"></i>',
+                function_on_click: edit_hosting
+            },
+            cards: {
+                item: 'כרטיס',
+                items: 'כרטיסים',
+                fields: [
+                    { "name": 'coffee_card_status', "description": '' },
+                    { "name": 'card_number', "description": 'מספר כרטיס' },
+                    { "name": 'card_name', "description": 'שם כרטיס' },
+                    { "name": 'date_add', "description": 'תאריך יצירה' },
+                    { "name": 'actions', "description": '' }
+                ],
+                symbol_fill: '<i class="bi bi-credit-card-fill"></i>',
+                function_on_click: edit_card
+            },
+            phones: {
+                item: 'פלאפון',
+                items: 'פלאפונים',
+                fields: [
+                    { "name": 'phone', "description": 'מספר פלאפון' },
+                    { "name": 'phone_name', "description": 'שם פלאפון' },
+                    { "name": 'date_add', "description": 'תאריך יצירה' },
+                    { "name": 'actions', "description": '' }
+                ],
+                symbol_fill: '<i class="bi bi-phone-fill"></i>',
+                function_on_click: edit_phone
+            },
+            permissions: {
+                item: 'הרשאה',
+                items: 'הרשאות',
+                fields: [
+                    { "name": 'object_description', "description": 'תיאור אמצעי זיהוי' },
+                    { "name": 'lock_alias', "description": 'שם מנעול' },
+                    { "name": 'type_permission', "description": 'סוג הרשאה' },
+                    { "name": 'status', "description": 'סטטוס' },
+                    { "name": 'actions', "description": '' }
+                ],
+                symbol_fill: '<i class="bi bi-shield-fill"></i>',
+                function_on_click: edit_peremission
+            }, records: {
+                item: 'רשומה',
+                items: 'רשומות',
+                fields: [
+                    { "name": 'date', "description": 'תאריך ושעה' },
+                    { "name": 'record_type_description', "description": 'סוג רשומה' },
+                    { "name": 'lock_alias', "description": 'שם מנעול' },
+                    { "name": 'done_by', "description": 'בוצע על ידי' },
+                    { "name": 'object_record_description', "description": 'תיאור אמצעי זיהוי' },
+                ],
+                symbol_fill: '<i class="bi bi-calendar2-check-fill"></i>',
+                hide_add_btn: true
+            }, hostings_ichilov: {
+                item: 'אירוח',
+                items: 'אירוחים',
+                fields: [
+                    { "name": 'lodging_start', "description": 'תאריך התחלה' },
+                    { "name": 'lodging_end', "description": 'תאריך סיום' },
+                    { "name": 'hospital_ward', "description": 'מחלקה' },
+                ],
+                symbol_fill: '<i class="bi bi-suitcase2-fill"></i>',
+                hide_add_btn: true
+            },
+        };
+
+        let person_id = $("#person_id").val();
+        let item = childs_type[child_name].item
+        if (!childs_type[child_name].hide_add_btn) {
+            $('#add_child_btn_text').html('הוסף ' + item);
+            $('#add_child_btn').data('child-name', child_name);
+            $('#add_child_btn').removeClass('d-none');
+        }
+        else {
+            $('#add_child_btn').addClass('d-none');
+        }
+        $.ajax({
+            url: "get_person_child_list/" + child_name + "/" + person_id,
+            type: "GET",
+            success: function (data) {
+
+                let child_list = data.child_list;
+                if (child_list.length > 0) {
+
+                    child_list_div.removeClass('d-flex justify-content-center align-items-center');
+                    let table = $('<table>').addClass('table table-striped table-hover small table-sm table-clickble table-fixed')
+                        .css({ 'cursor': 'pointer' }).attr('id', 'person_table_' + child_name);
+                    let thead = $('<thead>').addClass('sticky-top bg-light').append($('<tr>'));
+                    for (let i = 0; i < childs_type[child_name].fields.length; i++) {
+                        let th = $('<th data-column-name="' + childs_type[child_name].fields[i]['name'] + '">')
+                            .text(childs_type[child_name].fields[i]['description'])
+                            .click(sort_table);
+                        thead.append(th);
+                    }
+                    table.append(thead);
+
+                    let tbody = $('<tbody>');
+
+                    for (let d = 0; d < child_list.length; d++) {
+                        let tr = $('<tr>');
+                        for (let f = 0; f < childs_type[child_name].fields.length; f++) {
+                            let txt = '';
+                            let td = $('<td>');
+                            field_name = childs_type[child_name].fields[f]['name'];
+
+                            value = child_list[d][childs_type[child_name].fields[f]['name']];
+
+                            switch (field_name) {
+                                case 'status':
+                                    switch (value) {
+                                        case 0:
+                                            txt = '<i class="bi bi-check-circle text-success"></i> פעיל';
+                                            td.addClass('text-success');
+                                            break;
+                                        case 1:
+                                            txt = '<i class="bi bi-filter-circle text-warning"></i> בתהליך שידור';
+                                            td.addClass('text-warning');
+                                            break;
+                                        case 2:
+                                            txt = '<i class="bi bi-exclamation-circle text-danger"></i> בתהליך מחיקה';
+                                            td.addClass('text-danger');
+                                            break;
+                                        case 3:
+                                            txt = '<i class="bi bi-exclamation-circle text-danger"></i> מיועד למחיקה';
+                                            td.addClass('text-danger');
+                                            break;
+                                        case 4:
+                                            txt = '<i class="bi bi-x-circle text-secondary"></i> לא פעיל';
+                                            td.addClass('text-secondary');
+                                            break;
+                                    }
+                                    break;
+                                case 'type_permission':
+                                    switch (value) {
+                                        case 1:
+                                            txt = ' <i class="bi bi-shield"></i> קבוע';
+                                            break;
+                                        case 2:
+                                            txt = ' <i class="bi bi-hourglass-split"></i> זמני';
+                                            break;
+                                        case 3:
+                                            txt = '<i class="bi bi-arrow-clockwise"></i> מחזורי';
+                                            break;
+                                    }
+                                    break;
+                                case 'actions':
+                                    if (child_list[d]['status'] != 3) {
+                                        txt = '<span class="cursor-pointer"><i class="bi bi-trash"></i></span>';
+                                    }
+                                    if (child_name == 'hostings') {
+                                        txt = '<span class="cursor-pointer"><i class="bi bi-clipboard"></i></span>';
+                                    }
+                                    break;
+                                case 'object_description':
+                                    type_object = child_list[d]['type_object'];
+
+                                    switch (type_object) {
+                                        case 8:
+                                            txt = '<i class="bi bi-credit-card"></i> ' + value;
+                                            break;
+                                        case 16:
+                                            txt = ' <i class="bi bi-phone"></i> ' + value;
+                                            break;
+                                    }
+                                    break;
+                                case 'object_record_description':
+                                    if (child_list[d]['type_object_id'] == 8) {
+                                        txt = '<i class="bi bi-credit-card"></i> ' + value;
+                                    }
+                                    else if (child_list[d]['type_object_id'] == 16) {
+                                        txt = '<i class="bi bi-phone"></i> ' + value;
+                                    }
+                                    break;
+
+                                case 'coffee_card_status':
+                                    let coffee_class = '';
+                                    switch (child_list[d]['coffee_card']) {
+                                        case 1:
+                                            coffee_class = "-fill text-success";
+                                            break;
+                                        case 2:
+                                            coffee_class = "-fill text-danger";
+                                            break;
+                                        case 0:
+                                            coffee_class = " text-secondary";
+                                            break;
+                                    }
+                                    txt = '<span class="cursor-pointer"><i class="bi bi-cup-hot' + coffee_class + '"></i></i></span>';
+                                    break;
+                                case 'lodging_status':
+                                    if (person_id == child_list[d]['guest_id'] && !child_list[d]['guest_is_patient']) txt = "מלווה"
+                                    else txt = "מטופל"
+                                    break;
+                                case 'lodging_partner':
+                                    if (person_id == child_list[d]['guest_id']) txt = child_list[d]['patient_name']
+                                    else txt = child_list[d]['guest_name']
+                                    break;
+                                default:
+                                    txt = value;
+                                    break;
+                            }
+
+                            td.html(txt);
+                            if (child_name == 'permissions' && (child_list[d]['status'] == 1 || child_list[d]['status'] == 4)) td.addClass('text-secondary');
+                            switch (field_name) {
+                                case 'actions':
+                                    if (child_name == 'hostings') {
+                                        td.click(doplicate_hosting);
+                                    }
+                                    else {
+                                        td.click(delete_child_item);
+                                    }
+                                    break;
+                                case 'coffee_card_status':
+                                    td.click(change_coffee_card_status);
+                                    break;
+                                default:
+                                    td.click(childs_type[child_name]['function_on_click']);
+                                    break;
+                            }
+                            td.attr('data-id', child_list[d]['id'])
+                                .attr('data-child-name', child_name)
+                                .attr('data-column-name', field_name);
+                            tr.append(td)
+                        }
+
+                        tbody.append(tr);
+                    }
+                    table.append(tbody);
+                    child_list_div.html(table);
+                }
+                else {
+                    child_list_div.addClass('d-flex justify-content-center align-items-center');
+                    child_list_div.html('<div class="text-center" id="person_table_' + child_name + '">' + childs_type[child_name]['symbol_fill'] + ' אין ' + childs_type[child_name]['items'] + ' להצגה</div>');
+                }
+
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status  === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function doplicate_hosting() {
+        let hosting_id = $(this).data('id');
+        loadContent('#hosting_modal_content', 'doplicate_hosting/' + hosting_id, false, function () {
+            $("#hosting_modal").addClass('modal-md').removeClass('modal-xl').modal('show');
+            check_hosting_record();
+            set_guest_name_title();
+            replace_window(null, 'hosting_details')
+        });
+
+    }
+
+
+    function change_coffee_card_status() {
+        let card_id = $(this).data('id');
+
+        let current_status = $(this).find('i').hasClass('text-success') ? 1 : $(this).find('i').hasClass('text-danger') ? 2 : 0;
+        let new_status = current_status + 1;
+        if (new_status > 2) new_status = 0;
+
+        let self = $(this);
+
+        $.ajax({
+            url: "change_coffee_card_status/" + card_id + "/" + new_status,
+            type: "GET",
+            success: function (data) {
+                switch (new_status) {
+                    case 0:
+                        self.find('i').removeClass('text-danger bi-cup-hot-fill').addClass('text-secondary bi-cup-hot');
+                        break;
+                    case 1:
+                        self.find('i').removeClass('text-secondary bi-cup-hot').addClass('text-success bi-cup-hot-fill');
+                        break;
+                    case 2:
+                        self.find('i').removeClass('text-success').addClass('text-danger');
+                        break;
+                }
+                refresh_persons_windows();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status  === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    async function send_feedback() {
+        let btn = $(this);
+        if (btn.hasClass('btn-secondary')) {
+            await confirmation_modal('כבר נשלח משוב לאורח, האם לשלוח שוב?');
+        }
+
+        let person_id = $("#person_id").val();
+        let email = $("#email").val();
+        if (email.length == 0) {
+            alert_message('אין אימייל מוגדר', 'error');
+            return;
+        }
+        $.ajax({
+            url: "send_feedback/" + person_id,
+            type: "GET",
+            success: function (response) {
+                console.log(response)
+                btn.removeClass('btn-success').addClass('btn-secondary');
+                alert_message('טופס משוב נשלח בהצלחה', 'ok');
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status  === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        })
+    }
+
+    function edit_peremission() {
+        let peremission_id = $(this).data('id');
+        loadContent('#md-modal-content', 'permission/' + peremission_id);
+        $('#modal-md').modal('show');
+    }
+
+    function edit_card() {
+        let card_id = $(this).data('id');
+        loadContent('#md-modal-content', 'card/' + card_id);
+        $('#modal-md').modal('show');
+    }
+
+    function edit_hosting() {
+        let hosting_id = $(this).data('id');
+        loadContent('#hosting_modal_content', 'hosting/' + hosting_id);
+        $("#hosting_modal").removeClass('modal-xl').addClass('modal-md').modal('show');
+    }
+
+    function edit_phone() {
+        let phone_id = $(this).data('id');
+        loadContent('#md-modal-content', 'phone/' + phone_id);
+        $('#modal-md').modal('show');
+    }
+
+    function merge_person() {
+        let person_id = $("#person_id").val();
+        loadContent('#md-modal-content', 'merge_person/' + person_id);
+        $('#modal-md').modal('show');
+    }
+
+    function add_child(child_name) {
+        let person_id = $("#person_id").val();
+        if (child_name == 'permissions') {
+            data = {
+                person_id: person_id,
+                by_object: 'person',
+            };
+            $.ajax({
+                url: 'add_permissions',
+                type: 'POST',
+                dataType: 'html',
+                data: JSON.stringify(data),
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                success: function (data) {
+                    $('#md-modal-content').html(data);
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    if (xhr.status  === 401) {
+                        window.location.href = '/login';
+                    }
+                }
+            });
+            $('#modal-md').modal('show');
+        }
+        if (child_name == 'phones') {
+            loadContent('#md-modal-content', 'add_phone/' + person_id);
+            $('#modal-md').modal('show');
+        }
+        if (child_name == 'cards') {
+
+            loadContent('#md-modal-content', 'add_card/' + person_id);
+            $('#modal-md').modal('show');
+        }
+        if (child_name == 'hostings') {
+            loadContent('#hosting_modal_content', 'hosting', false, function () {
+                $("#guest_id_number").val($("#id_number").val());
+                $("#guest_first_name").val($("#first_name").val());
+                $("#guest_last_name").val($("#last_name").val());
+                $("#guest_phone").val($("#person_phone").val());
+                $("#guest_email").val($("#email").val());
+                $("#guest_address").val($("#address").val());
+                $("#guest_house_number").val($("#house_number").val());
+                $("#guest_city").val($("#city").val());
+                $("#hosting_modal").removeClass('modal-xl').addClass('modal-md').modal('show');
+                check_hosting_record();
+                set_guest_name_title();
+            });
+
+        }
+    }
+
+
+
+
+</script>

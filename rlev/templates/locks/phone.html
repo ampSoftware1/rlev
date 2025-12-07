@@ -1,0 +1,81 @@
+<div class="modal-header">
+    {% if phone_id %}
+    <h5 class="modal-title">עריכת פלאפון</h5>
+    {% else %}
+    <h5 class="modal-title">הוספת פלאפון</h5>
+    {% endif %}
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <div class="form-group row">
+        <input type="hidden" id="phone_id" value="{{ phone_id }}">
+        <input type="hidden" id="person_id" value="{{ person_id }}">
+        <div class="col">
+            <label for="phone">
+                <i class="bi bi-phone"></i> מספר פלאפון
+            </label>
+            <input type="text" class="form-control" id="phone_number" value="{{ phone }}" style="text-align: right">
+        </div>
+        <div class="col">
+            <label for="phone_name">
+                <i class="bi bi-person"></i> שם
+            </label>
+            <input type="text" class="form-control" id="phone_name" value="{{ phone_name }}" style="text-align: right">
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+    <button type="button" id="save_phone" class="btn btn-primary">שמור</button>
+</div>
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    $(document).ready(function () {
+        $('#save_phone').click(save_phone);
+    });
+
+    function save_phone() {
+        let phone_number = $('#phone_number').val();
+        let phone_name = $('#phone_name').val();
+        let person_id = $('#person_id').val();
+        let phone_id = $('#phone_id').val();
+
+        if (phone_number.length == 0 || phone_name.length == 0) {
+            alert_message('יש למלא מספר פלאפון ושם', 'error');
+            return;
+        }
+
+        data = {
+            'phone_id': phone_id,
+            'person_id': person_id,
+            'phone': phone_number,
+            'phone_name': phone_name
+        };
+
+        $.ajax({
+            url: 'save_phone',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: function (xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", csrfToken);
+            },
+            success: function (data) {
+                if (data.success) {
+                    alert_message('הפלאפון נוסף בהצלחה', 'ok');
+                    get_person_list_child('phones');
+                    check_view_permissions();
+                    refresh_persons_windows();
+                    $('#modal-md').modal('hide');
+                } else {
+                    alert_message(data.error, 'error');
+                }
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+</script>

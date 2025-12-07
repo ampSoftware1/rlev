@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+           
+            margin: 0; 
+            padding: 10mm;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .header .logo {
+            width: 50px;
+            height: 50px;
+        }
+
+        .header .title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .report-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .report-date {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #333;
+        }
+
+        th, td {
+            padding: 4px;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .col-5 {
+            width: 5%;
+        }
+
+        .col-10 {
+            width: 10%;
+        }
+
+        .col-20 {
+            width: 20%;
+        }
+        
+
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <img src="https://childrens-house.r-lev.org/dashboard/media/logo.png" alt="Logo" class="logo">
+    <div class="title">דוח מלונית</div>
+</div>
+
+<div class="report-title">{{ report_description }}</div>
+<div class="report-date">תאריך: {{ report_date}}</div>
+
+<table>
+    <thead>
+        <tr>
+            <th class="col-5">שם דירה</th>
+            <th class="col-10">שם אורח</th>
+            <th class="col-5">סטטוס אורח</th>
+            <th class="col-10">שם מטופל</th>
+            <th class="col-10">מחלקה</th>
+            <th class="col-5">גורם מפנה</th>
+            <th class="col-10">תאריך כניסה</th>
+            <th class="col-10">תאריך יציאה</th>
+            <th class="col-5">אנשים בחדר</th>
+            <th class="col-5">חסרים מסמכים</th>
+            <th class="col-5">הועלה קובץ</th>
+            <th class="col-20">הערת אירוח</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for house_record in houses_records %}
+            {% for hosting in house_record.hostings %}
+            <tr>
+                <td class="col-5">{{ house_record.name }}</td>
+                <td class="col-10">{{ hosting.guest_name }}</td>
+                <td class="col-5">{{ hosting.status_guest }}</td>
+                <td class="col-10">{{ hosting.patient_name }}</td>
+                <td class="col-10">{{ hosting.hospital_ward }}</td>
+                <td class="col-5">{{ hosting.trigger }}</td>
+                <td class="col-10">{{ hosting.lodging_start_formater }}</td>
+                <td class="col-10">{{ hosting.lodging_end_formater }}</td>
+                <td class="col-5">{{ hosting.persons_in_house }}</td>
+                <td class="col-5">{% if not hosting.documents %}✓{% endif %}</td>
+                <td class="col-5">{% if hosting.file_path1 %}✓{% endif %}</td>
+                <td class="col-20">{{ hosting.note }}</td>
+            </tr>
+            {% endfor %}
+        {% endfor %}
+    </tbody>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,125 @@
+{% load custom_filters %}
+
+
+
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <title>השוואת נתונים</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .highlight {
+            background-color: #cce5ff !important;
+        }
+
+        .selectable {
+            cursor: pointer;
+        }
+
+        .yelow-highlight {
+            background-color: #fff3cd !important;
+        }
+
+        .icon {
+            margin-right: 5px;
+            width: 12px;
+            height: 12px;
+            display: inline-block;
+            border-radius: 50%;
+        }
+
+        .red-icon {
+            background-color: red;
+        }
+
+        .yellow-icon {
+            background-color: orange;
+        }
+
+        .gray-icon {
+            background-color: gray;
+        }
+    </style>
+</head>
+
+<body class="p-4">
+    <div class="container">
+        <h3 class="mb-4">השוואת נתונים</h3>
+
+        <table class="table table-bordered table-striped text-center align-middle">
+            <thead>
+                <tr>
+                    <th>שם השדה</th>
+                    <th class="yelow-highlight">רשומה חדשה</th>
+                    {% for item in data.data_from_sf %}
+                    <th>רשומה קיימת {{ forloop.counter }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>רשומה לשמירה</strong></td>
+                    <td class="yelow-highlight"><input type="radio" name="mainColumn" value="new"></td>
+                    {% for item in data.data_from_sf %}
+                    <td><input type="radio" name="mainColumn" value="{{ forloop.counter }}"></td>
+                    {% endfor %}
+                </tr>
+                {% for field in data.fields %}
+                <tr data-field-name="{{ field.field_name }}">
+                    <td><span class="icon {% if field.priority == '1' %} red-icon {% elif field.priority == '2' %}yellow-icon{% else %}gray-icon{% endif %} "></span> {{ field.field_heb }} </td>
+                    <td class="selectable set-yelow-highlight yelow-highlight">{{ data.data_from_page|dict_get:field.field_name }}</td>
+                    {% for item in data.data_from_sf %}
+                    <td class="selectable {% if item|dict_get:field.field_name != data.data_from_page|dict_get:field.field_name %} text-danger fw-bold {% endif %}">{{ item|dict_get:field.field_name }}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+
+
+            </tbody>
+        </table>
+
+        <button id="getResults" class="btn btn-primary">שליחה</button>
+        <pre id="output" class="mt-3"></pre>
+    </div>
+
+    <script>
+        $(document).ready(function () {
+            // לחיצה על תא
+            $('.selectable').on('click', function () {
+                const row = $(this).closest('tr');
+                row.find('.selectable').removeClass('highlight');
+                row.find('.set-yelow-highlight').addClass('yelow-highlight');
+                $(this).addClass('highlight').removeClass('yelow-highlight');
+            });
+
+            // לחצן לקבלת תוצאות
+            $('#getResults').on('click', function () {
+                let mainColumn = $('input[name="mainColumn"]:checked').val();
+                let result = {};
+                result['record_id'] = mainColumn;
+                if (!mainColumn) {
+                    alert('יש לבחור רשומה לשמירה');
+                    return;
+                }
+                let colIndex = $("th:contains(" + mainColumn + ")").index();
+
+                $('table tbody tr').each(function () {
+                    const fieldName = $(this).data('field-name');
+                    const selectedCell = $(this).find('.highlight');
+
+                    if (selectedCell.length > 0) {
+                        let selectedText = selectedCell.text().trim();
+                        result[fieldName] = selectedText
+                    }
+                });
+
+                $('#output').text(JSON.stringify(result, null, 2));
+            });
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,102 @@
+{% load custom_filters %}
+<div class="sticky-top p-3 bg-white border-bottom" style="z-index: 1000" id="houses_win">
+    <div class="">
+        <div class="row">
+            <div class="col-1">
+                <span class="fs-4 fw-bold ">דירות</span>
+            </div>
+            <div class="col-4 pr-2">
+                <input type="text" class="form-control" placeholder="חיפוש חופשי" id="search-input">
+            </div>
+
+
+            <div class="col-7 fs-4 text-end">
+                <span>
+                    <i class="bi bi-file-earmark-ruled cursor-pointer mx-2" data-toggle="tooltip" title="דוחות"
+                        id="houses_reports"></i>
+                </span>
+                {% if is_admin %}
+                <span>
+                    <i class="bi bi-plus-circle cursor-pointer mx-2" data-toggle="tooltip" title="הוסף דירה"
+                        id="add_house"></i>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+<div class="p-3">
+    <div class="row">
+        {% for house in houses %}
+        <div class="col-3 house-box"  {% if not house.active %} style="opacity: 0.5" {% endif %}>
+            <div class="card text-bg-light m-2 custom-shadow house cursor-pointer" data-house-id={{ house.id }}>
+                <div class="card-header text-center">
+                    {% if house.current_hosting %}
+                    <span class="badge bg-primary">
+                        {{ house.current_hosting.guest_name }} | {{ house.current_hosting.lodging_end_formater }}
+                    </span>
+                    {% else %}
+                    <span class="badge bg-success">
+                        פנוי
+                    </span>
+                    {% endif %}
+                    
+                </div>
+                <div class="house-description card-body text-center py-4 fs-5">{{ house.description }}</div>
+
+                <div class="card-footer text-center">
+                    {% if house.lock %}
+                        {{ house.lock.electric_quantity|battery_status }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+
+
+            $("#add_house").click(function () {
+                loadContent('#md-modal-content', 'house');
+                $('#modal-md').modal('show');
+            });
+
+            $("#houses_reports").click(function () {
+                loadContent('#xl-modal-content', 'houses_reports');
+                $('#modal-xl').modal('show');
+            });
+
+        });
+
+        $(".house").click(function () {
+            let house_id = $(this).data("house-id");
+            loadContent('#lg-modal-content', 'house/' + house_id);
+            $('#modal-lg').modal('show');
+        });
+
+        $('#search-input').on('input', function () {
+            filter_house();
+        });
+
+
+        function filter_house() {
+            let search_input = $('#search-input').val();
+
+            $('.house-box').each(function () {
+                let house = $(this);
+                let house_description = house.find('.house-description').text();
+
+                let search_matches = (house_description.includes(search_input));
+
+                if (search_matches) {
+                    house.show();
+                } else {
+                    house.hide();
+                }
+            });
+        }
+
+    </script>

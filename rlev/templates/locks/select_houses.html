@@ -1,0 +1,98 @@
+<div class="modal-header" style="height: 10vh;">
+    <h5 class="modal-title">בחר דירות</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body p-0" style="height: 70vh;">
+    <div class="p-1" style="font-size: small;">
+        <span class="fw-bold"> נבחרו <span id="selected-houses-count">0</span> דירות </span>
+        <span class="badge bg-primary float-end cursor-pointer" id="unselect_all_houses">בטל הכל</span>
+        <span class="badge bg-primary float-end mx-1 cursor-pointer" id="select_all_houses">בחר הכל</span>
+    </div>
+    <div class="p-3 text-center" style="height: 58vh;
+                max-height: 58vh;
+                overflow-y: scroll">
+        <div >
+            <input class="form-control mb-1 form-control-sm sticky-top" style="font-size: 12px; padding: 0.25rem 0.5rem;" id="search_house" type="text" placeholder="חפש דירה">
+            <div class="row" id="select_houses_area">
+                {% for house in houses %}
+                <div class="col-2 p-2 house-area">
+                    <div class="card card-select-house cursor-pointer" style="height: 60px" data-house-id="{{ house.id }}">
+                        <div class="card-body">{{ house.description }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer bg-light">
+    <button type="button" id="cancel_select_houses" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+    <button type="button" id="select_houses" class="btn btn-primary">בחר</button>
+</div>
+<script>
+    $(document).ready(function () {
+
+        sort_houses();
+
+        $("#search_house").on('input', function () {
+            let value = $(this).val();
+            $('.house-area').each(function () {
+                if ($(this).text().includes(value)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+    });
+
+    function after_selected_houses() {
+        let count = $('.card-select-house.selected').length;
+        $('#selected-houses-count').text(count);
+        sort_houses();
+    }
+
+    function sort_houses() {
+
+        var houses = $('.house-area').toArray();
+
+        houses.sort(function (a, b) {
+            var aSelected = $(a).find('.card').hasClass('selected');
+            var bSelected = $(b).find('.card').hasClass('selected');
+            var aText = $(a).find('.card-body').text().trim().toLowerCase();
+            var bText = $(b).find('.card-body').text().trim().toLowerCase();
+            if (aSelected && !bSelected) {
+                return -1;
+            }
+            if (!aSelected && bSelected) {
+                return 1;
+            }
+            if (aText < bText) {
+                return -1;
+            }
+            if (aText > bText) {
+                return 1;
+            }
+            return 0;
+        });
+        $('#select_houses_area').empty().append(houses);
+
+        $('.card-select-house').click(function () {
+            $(this).toggleClass('selected');
+            after_selected_houses();
+        });
+
+        $('#select_all_houses').click(function () {
+            $('.card-select-house').addClass('selected');
+            after_selected_houses();
+        });
+
+        $('#unselect_all_houses').click(function () {
+            $('.card-select-house').removeClass('selected');
+            after_selected_houses();
+        });
+
+    }
+
+
+</script>

@@ -1,0 +1,102 @@
+<input id="search_reverse_value_val" hidden value="{{ reverse_value }}">
+<input id="search_reverse_card_val" hidden value="{{ card_name }}">
+
+{% for person in persons %}
+<div class="row mt-1 person-area">
+    <div class="col-1 d-flex align-items-center justify-content-center">
+        <div class="rounded-circle bg-light text-secondary border d-flex justify-content-center align-items-center rounded fs-4 person cursor-pointer"
+            style="width: 80px; height: 80px">
+            <i class="bi bi-person-circle"></i>
+        </div>
+    </div>
+    <div class="person-card col-11 card bg-light cursor-pointer" data-person-id="{{ person.id }}">
+        <div class="card-body p-1 border-bottom">
+            <div class="row  {% if person.status_record == 1 %}text-secondary{% endif %}">
+                <div class="col-3 person-name">
+                    {% if person.status_record == 1 %} <i class="bi bi-exclamation-triangle"></i> {% endif %}
+                    <span class="fw-bold">{{ person.name }}</span>
+                </div>
+                <div class="col-2">
+                    <span class="fw-bold">{{ person.phone }}</span>
+                </div>
+                <div class="col-2 person-role">
+                    <span class="fw-bold">{{ person.role }}</span>
+                </div>
+                <div class="col-3">
+                    {% if person.hosting_in_house|length > 0 %}
+                    <span class="fw-bold text-success"><i class="bi bi-suitcase2"></i> {{ person.hosting_in_house }}</span>
+                    {% endif %}
+                </div>
+                <div class="col-2 person-date">
+                    <span class="fw-bold">{{ person.date_add }}</span>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-start p-1 px-3">
+            {% for card in person.cards %}
+            <div class="col-2 border rounded p-2 mx-1 bg-white identification card-item cursor-pointer"
+                data-card-id="{{ card.id }}">
+                <i class="bi bi-credit-card"></i>
+
+                <span>{{ card.card_name }} <span class="d-none">{{ card.card_number }}</span> </span>
+                {% if card.coffee_card == 1 %}
+                <i class="bi bi-cup-hot-fill text-success"></i>
+                {% elif card.coffee_card == 2 %}
+                <i class="bi bi-cup-hot-fill text-danger"></i>
+                {% endif %}
+            </div>
+            {% endfor %}
+            {% for phone in person.phones %}
+            <div class="col-2 border rounded p-2 mx-1 bg-white identification phone-item cursor-pointer"
+                data-phone-id="{{ phone.id }}">
+                <i class="bi bi-phone"></i>
+                <span>{{ phone.phone_name }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endfor %}
+{% if current_index %}
+
+<div class="text-center mt-3 load-more" >
+    <input type="hidden" id="current_index" value="{{ current_index }}">
+    <button class="btn btn-primary" id="load_more">טען עוד..</button>
+</div>
+{% endif %}
+<script>
+    $(document).ready(function () {
+
+        $("#search_reverse_value").text($("#search_reverse_value_val").val());
+        $("#search_reverse_card").text($("#search_reverse_card_val").val());
+
+        $('.identification').click(function (event) {
+            event.stopPropagation();
+            $(this).toggleClass('identification_selected bg-white');
+            refresh_count_identification_selected();
+
+        })
+
+        $("#load_more").click(function(){
+            let current_index = parseInt($("#current_index").val());
+            $(".load-more").remove();
+            load_persons({"current_index": current_index})
+        });
+
+        $('.person').click(function () {
+            $(this).parent().parent().find('.identification').toggleClass('identification_selected bg-white');
+            refresh_count_identification_selected();
+        });
+
+        $('.person-card').click(function () {
+            let person_id = $(this).data("person-id");
+            loadContent('#lg-modal-content', 'person/' + person_id);
+            $('#modal-lg').modal('show');
+        });
+
+        $('.identification').hover(function () {
+            $(this).find('i').toggleClass('text-secondary')
+        });
+
+    });
+</script>

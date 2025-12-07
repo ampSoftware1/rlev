@@ -1,0 +1,244 @@
+<div class="modal-header">
+    {% if user_id %}
+    <h5 class="modal-title">עריכת משתמש</h5>
+    {% else %}
+    <h5 class="modal-title">הוספת משתמש</h5>
+    {% endif %}
+    <div>
+        {% if user_id %}
+        <button type="button" class="btn btn-danger btn-sm" id="delete_user">מחק משתמש <i class="bi bi-trash"></i></button>
+        {% endif %}
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+</div>
+<div class="modal-body">
+    <div class="form-group row">
+        <input type="hidden" id="user_id" value="{{ user_id }}">
+        <div class="col">
+            <label for="username">
+                <i class="bi bi-circle"></i> שם משתמש
+            </label>
+            <input type="text" class="form-control" id="username" value="{{ username }}">
+        </div>
+        <div class="col">
+            <div id="password_div" {% if user_id %} class="d-none" {% endif %}>
+                <label for="password">
+                    <i class="bi bi-key"></i> סיסמה
+                </label>
+                <input type="text" class="form-control" id="password">
+            </div>
+            {% if user_id %}
+            <br>
+            <button class="btn btn-primary btn-sm" id="reset_password">
+                <i class="bi bi-key"></i> אפס סיסמה
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col">
+            <label for="first_name">
+                <i class="bi bi-person"></i> שם פרטי
+            </label>
+            <input type="text" class="form-control" id="first_name" value="{{ first_name }}">
+        </div>
+        <div class="col">
+            <label for="last_name">
+                <i class="bi bi-person"></i> שם משפחה
+            </label>
+            <input type="text" class="form-control" id="last_name" value="{{ last_name }}">
+        </div>
+    </div>
+    <div class="form-group row">
+        <div class="col">
+            <label for="email">
+                <i class="bi bi-at"></i> דואר אלקטרוני
+            </label>
+            <input type="text" class="form-control" id="email" value="{{ email }}">
+        </div>
+        <div class="col">
+            <br>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="is_superuser" {% if is_superuser %} checked {% endif %}>
+                <label class="form-check-label" for="is_superuser"> הרשאות ניהול</label>
+            </div>
+
+        </div>
+    </div>
+    <div class="form-group row mt-2">
+        <div class="col">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="allow_main" {% if allow_main %} checked {% endif %}>
+                <label class="form-check-label" for="allow_main">
+                    הרשאה למערכת מנעולים
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="allow_coffee_cards" {% if allow_coffee_cards %} checked {% endif %}>
+                <label class="form-check-label" for="allow_coffee_cards">
+                    הרשאה לממשק כרטיסי קפה
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="allow_passage_modes" {% if allow_passage_modes %} checked {% endif %}>
+                <label class="form-check-label" for="allow_passage_modes">
+                    הרשאה ליצירת מצבי מעבר
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="allow_houses" {% if allow_houses %} checked {% endif %}>
+                <label class="form-check-label" for="allow_houses">
+                    הרשאה למלונית בית הילד
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="allow_hostings_ichilov" {% if allow_hostings_ichilov %} checked {% endif %}>
+                <label class="form-check-label" for="allow_hostings_ichilov">
+                    הרשאה לאורחים איכילוב
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="allow_locks_records" {% if allow_locks_records %} checked {% endif %}>
+                <label class="form-check-label" for="allow_locks_records">
+                    הרשאה לרשומות נעילה
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="allow_permissions" {% if allow_permissions %} checked {% endif %}>
+                <label class="form-check-label" for="allow_permissions">
+                    הרשאה לניהול הרשאות
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="allow_hostings" {% if allow_hostings %} checked {% endif %}>
+                <label class="form-check-label" for="allow_hostings">
+                    הרשאה לניהול אירוחים
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="allow_feedback" {% if allow_feedback %} checked {% endif %}>
+                <label class="form-check-label" for="allow_feedback">
+                    הרשאה לשליחת משוב
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+    <button type="button" id="save_user" class="btn btn-primary">שמור</button>
+</div>
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    $(document).ready(function () {
+        $('#save_user').click(save_user);
+        $('#reset_password').click(reset_password);
+        $('#delete_user').click(delete_user);
+    });
+
+    function reset_password() {
+        $("#reset_password").addClass('d-none');
+        $("#password_div").removeClass('d-none');
+
+    }
+
+    async function delete_user() {
+        let user_id = $('#user_id').val();
+        await confirmation_modal('האם הנך בטוח שברצונך למחוק את המשתמש?');
+        $.ajax({
+            url: 'delete_user/' + user_id,
+            type: 'GET',
+            contentType: 'application/json',
+            success: function (data) {
+                alert_message('המשתמש נמחק בהצלחה', 'ok');
+                loadContent('#content', 'users', false);
+                $('#modal-md').modal('hide');
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function save_user() {
+        let user_id = $('#user_id').val();
+        let username = $('#username').val();
+        let password = $('#password').val();
+        let first_name = $('#first_name').val();
+        let last_name = $('#last_name').val();
+        let email = $('#email').val();
+        let is_superuser = $('#is_superuser').prop('checked');
+        let allow_main = $('#allow_main').prop('checked');
+        let allow_coffee_cards = $('#allow_coffee_cards').prop('checked');
+        let allow_passage_modes = $('#allow_passage_modes').prop('checked');
+        let allow_hostings_ichilov = $('#allow_hostings_ichilov').prop('checked');
+        let allow_feedback = $('#allow_feedback').prop('checked');
+        let allow_houses = $("#allow_houses").prop('checked');
+        let allow_locks_records = $("#allow_locks_records").prop('checked');
+        let allow_hostings = $("#allow_hostings").prop('checked')
+        let allow_permissions = $("#allow_permissions").prop('checked')
+
+        if (username.length == 0) {
+            alert_message('יש למלא שם משתמש', 'error');
+            return;
+        }
+
+        if ($("#password_div").hasClass('d-none') == false && password.length == 0) {
+            alert_message('יש למלא סיסמה', 'error');
+            return;
+        }
+
+        if (first_name.length == 0 || last_name.length == 0) {
+            alert_message('יש למלא שם', 'error');
+            return;
+        }
+
+        data = {
+            user_id: user_id,
+            username: username,
+            first_name: first_name,
+            last_name: last_name,
+            email: email,
+            is_superuser: is_superuser,
+            allow_main: allow_main,
+            allow_coffee_cards: allow_coffee_cards,
+            allow_passage_modes: allow_passage_modes,
+            allow_hostings_ichilov: allow_hostings_ichilov,
+            allow_houses: allow_houses,
+            allow_feedback: allow_feedback,
+            allow_hostings: allow_hostings,
+            allow_permissions: allow_permissions,
+            allow_locks_records: allow_locks_records
+        };
+
+        if ($("#password_div").hasClass('d-none') == false) {
+            data.password = $("#password").val();
+        }
+
+        $.ajax({
+            url: 'save_user',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: function (xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", csrfToken);
+            },
+            success: function (data) {
+                if (data.success) {
+                    alert_message('המשתמש נשמר בהצלחה', 'ok');
+                    loadContent('#content', 'users', false);
+                    $('#modal-md').modal('hide');
+                } else {
+                    alert_message(data.error, 'error');
+                }
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+</script>

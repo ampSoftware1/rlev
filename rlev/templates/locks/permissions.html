@@ -1,0 +1,233 @@
+<div class="p-3 d-flex justify-content-between align-items-center" style="height: 10vh;" data-model-name="permission">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fs-4 fw-bold "><i class="bi bi-shield"></i> הרשאות</span>
+        </div>
+        <div class="mx-3">
+            <label>שם אורח</label>
+            <input type="text" data-field-name="person_full_name__contains" class="form-control filter-control permission-filter" placeholder="הזן שם אורח...">
+        </div>
+        <div class="mx-1">
+            <label>תפקיד</label>
+            <select data-field-name="person_role" class="form-select form-control filter-control permission-filter">
+                <option value="">הכל</option>
+                {% for role in roles %}
+                <option>{{ role }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mx-3">
+            <label>מנעולים</label><br>
+            <span class="small fw-bold">נבחרו </span><span class="small fw-bold" id="countLocks" class="mx-1">0</span><span class="small fw-bold"> מנעולים</span>
+            <span class="badge bg-primary text-white fw-bold cursor-pointer mx-1" id="selectLocks">בחר מנעולים <i class="bi bi-lock"></i></span>
+            <input id="locksIdsFilter" type="hidden" data-field-name="lock_id__in" data-process-value="convertToArray" class="form-control filter-control permission-filter process-value">
+        </div>
+        <div class="mx-3">
+            <label>מספר כרטיס</label>
+            <input type="text" data-field-name="card_number" class="form-control filter-control permission-filter" placeholder="הזן מספר כרטיס...">
+        </div>
+        <div class="mx-3">
+            <label>תאריך הוספה לפני</label>
+            <input type="date" data-field-name="date_add__lte" class="form-control filter-control permission-filter process-value" data-process-value="dateToInt">
+        </div>
+        <div class="mx-3">
+            <label>שימוש אחרון לפני</label>
+            <input type="date" data-field-name="last_use__lte" class="form-control filter-control permission-filter process-value" data-process-value="dateToInt">
+        </div>
+
+    </div>
+
+    <span class="fs-4">
+        <span title="הוסף הרשאה" class="mx-1 cursor-pointer add-item-btn" data-model-name="permission" data-modal-size="md" data-id="" data-toggle="tooltip"><i class="bi bi-plus-circle"></i></span>
+    </span>
+
+</div>
+<div class="d-flex justify-content-between align-items-center mb-2 mx-4">
+    <div>
+        <span class="small fw-bold">נבחרו </span><span class="small fw-bold" id="selected-count" class="mx-1">0</span><span class="small fw-bold"> הרשאות</span>
+        <span class="badge bg-danger mx-1 cursor-pointer d-none" id="deselect-all">בטל סימון הרשאות</span>
+        <span class="badge bg-danger mx-1 cursor-pointer d-none" id="delete-all"><i class="bi bi-trash cursor-pointer" data-toggle="tooltip"></i> מחק הרשאות שנבחרו</span>
+
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+        <span class="text-muted mx-2 permission-records-index">
+            מציג רשומה <b class="min-record">-</b> עד <b class="max-record">-</b> מתוך <b class="total-records">-</b>
+        </span>
+
+        <div class="input-group permission-pages" style="width: auto;" data-model-name="permission">
+            <span class="input-group-text cursor-pointer pages-btn min-page">-</span>
+            <input type="number" class="form-control page-input page-number" style="width: 60px;" value="">
+            <span class="input-group-text cursor-pointer pages-btn max-page">-</span>
+        </div>
+    </div>
+</div>
+
+<div class="px-3 bg-white" style="max-height: 75vh; overflow: auto;">
+    <table id="permissionTable" class="table table-hover table-striped table-bordered" data-model-name="permission">
+        <thead class="bg-white position-sticky" style="top: 0;">
+            <tr>
+                <th style="width: 4%;"></th>
+                <th style="width: 15%;" data-column="person_full_name" class="column-sort">שם אורח
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 10%;" data-column="person_role" class="column-sort">תפקיד
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+
+                <th style="width: 15%;" data-column="card_name" class="column-sort">שם כרטיס
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 10%;" data-column="card_number" class="column-sort">מספר כרטיס
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 10%;" data-column="lock__lock_alias" class="column-sort">שם מנעול
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 10%;" data-column="type_permission" class="column-sort">סוג הרשאה
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 10%;" data-column="date_add" class="column-sort"> תאריך הוספה
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 10%;" data-column="last_use" class="column-sort"> שימוש אחרון
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+</div>
+
+
+<script>
+    if (typeof selectedIdsPermissions === 'undefined') {
+        var selectedIdsPermissions = [];
+    }
+
+    $(document).ready(function () {
+        getTable('permission');
+        $('[data-toggle="tooltip"]').tooltip();
+        $("#selectLocks").click(selectLocks);
+        $("#deselect-all").click(function () {
+            unselectedIdsPermissions()
+        });
+
+        $("#delete-all").click(function () {
+            removePermissions();
+        });
+        $('#permissionTable tbody').on('click', 'tr', edit_peremission);
+    });
+
+    function edit_peremission() {
+        if ($(event.target).is('.check-box-permission')) {
+            return;
+        }
+        let peremission_id = $(this).data('id');
+        loadContent('#md-modal-content', 'permission/' + peremission_id);
+        $('#modal-md').modal('show');
+    }
+
+    function dateToInt(value) {
+        if (value) {
+            const date = new Date(value);
+            return date.getTime();
+        }
+        return '';
+    }
+
+    async function selectLocks() {
+        let selected_locks = await select_locks();
+        let locks_ids = selected_locks.locks_ids;
+        $("#locksIdsFilter").val(locks_ids);
+        $("#countLocks").text(locks_ids.length);
+
+        getTable('permission');
+    }
+
+    function convertToArray(value) {
+        if (value) {
+            return value.split(',').map(item => item.trim());
+        }
+        return '';
+    }
+
+    function permissionsAfterGetTable() {
+        applySelectedCheckboxes();
+    }
+
+</script>
+
+<script>
+
+    function unselectedIdsPermissions() {
+        selectedIdsPermissions = [];
+        updateCountText();
+        $('.check-box-permission').prop('checked', false);
+    }
+
+    function updateCountText() {
+        $('#selected-count').text(selectedIdsPermissions.length);
+        if (selectedIdsPermissions.length > 0) {
+            $('#deselect-all').removeClass('d-none');
+            $('#delete-all').removeClass('d-none');
+        } else {
+            $('#deselect-all').addClass('d-none');
+            $('#delete-all').addClass('d-none');
+        }
+    }
+
+    $(document).on('change', '.check-box-permission', function (event) {
+
+        const id = $(this).data('id').toString();
+        if ($(this).is(':checked')) {
+            if (!selectedIdsPermissions.includes(id)) {
+                selectedIdsPermissions.push(id);
+            }
+        } else {
+            const index = selectedIdsPermissions.indexOf(id);
+            if (index > -1) {
+                selectedIdsPermissions.splice(index, 1);
+            }
+        }
+        updateCountText();
+    });
+
+    function applySelectedCheckboxes() {
+        // עבור על המערך שסופק וסמן את המתאימים
+        selectedIdsPermissions.forEach(function (id) {
+            const checkbox = $('.check-box-permission[data-id="' + id + '"]');
+            console.log(checkbox);
+            checkbox.attr('checked', 'checked');
+        })
+
+    }
+
+    async function removePermissions() {
+        let permissions_ids = selectedIdsPermissions;
+        await confirmation_modal('האם הנך בטוח שברצונך למחוק את ההרשאות של ' + (selectedIdsPermissions.length) + ' ההרשאות שנבחרו?');
+
+        $.ajax({
+            url: 'remove_permissions',
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            contentType: 'application/json',
+            data: JSON.stringify({ permissions: permissions_ids }),
+            success: function (response) {
+                locks_to_sync = response.locks_to_sync
+                transmission(locks_to_sync);
+                alert_message('ביטול ההרשאות נשלח לשידור', 'ok');
+                unselectedIdsPermissions()
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+</script>

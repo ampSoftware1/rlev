@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>דוח חדרים 2024</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            width: 210mm;
+            height: 297mm;
+            margin: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .header .logo {
+            width: 50px;
+            height: 50px;
+        }
+
+        .header .title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .report-title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .report-date {
+            text-align: center;
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #333;
+        }
+
+        th, td {
+            padding: 4px;
+            text-align: center;
+            font-size: 18px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        /* Set column widths */
+        .col-name, .col-guest, .col-note, .col-end-lodging {
+            width: 20%;
+        }
+        .col-clean,  .col-clean-checkout, .col-meal, .col-fault, .col-persons-in-house {
+            width: 4%;
+        }
+  
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <img src="https://childrens-house.r-lev.org/dashboard/media/logo.png" alt="Logo" class="logo">
+    <div class="title">דוח מלונית</div>
+</div>
+
+<div class="report-title">{{ report_description }}</div>
+<div class="report-date">תאריך: {{ report_date}}</div>
+
+<table>
+    <thead>
+        <tr>
+            <th class="col-name">שם דירה</th>
+            <th class="col-guest">שם אורח</th>
+            <th class="col-end-lodging">תאריך יציאה</th>
+            <th class="col-persons-in-house">אנשים בחדר</th>
+            <th class="col-clean">ניקוי</th>
+            <th class="col-clean-checkout">ניקוי צ'ק-אאוט</th>
+            <th class="col-meal">ארוחה</th>
+            <th class="col-bed">החלפת מצעים</th>
+            <th class="col-fault">תקלה בחדר</th>
+            <th class="col-note">הערה</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for house_record in houses_records %}
+        <tr>
+            <td>{{ house_record.name }}</td>
+            <td>{{ house_record.hostings.0.guest_name }}</td>
+            <td>{{ house_record.hostings.0.lodging_end_formater }}</td>
+            <td>{{ house_record.hostings.0.persons_in_house }}</td>
+            <td>{% if house_record.report_details.clean %}✓{% endif %}</td>
+            <td>{% if house_record.report_details.clean_check_out %}✓{% endif %}</td>
+            <td>{% if house_record.report_details.meal %}✓{% endif %}</td>
+            <td>{% if house_record.report_details.bed %}✓{% endif %}</td>
+            <td>{% if house_record.report_details.fault %}✓{% endif %}</td>
+            <td>{{ house_record.report_details.note }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+</body>
+</html>
+

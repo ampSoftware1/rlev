@@ -1,0 +1,147 @@
+<div class="modal-header" style="height: 10vh;">
+    <h5 class="modal-title">בחר מנעולים</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body p-0" style="height: 70vh;">
+    <div class="p-1" style="font-size: small;">
+        <span class="fw-bold"> נבחרו <span id="selected-locks-count">0</span> מנעולים </span>
+        <span class="badge bg-primary float-end cursor-pointer" id="unselect_all_locks">בטל הכל</span>
+        <span class="badge bg-primary float-end mx-1 cursor-pointer" id="select_all_locks">בחר הכל</span>
+    </div>
+    <div class="border-bottom border-top p-2" style="height: 8vh;
+                max-height: 8vh;
+                overflow-y: scroll;
+                max-width: 100%;
+                overflow-x: hidden">
+        <!-- <input class="form-control mb-1 form-control-sm sticky-top" style="font-size: 12px; padding: 0.25rem 0.5rem;" id="search_group" type="text" placeholder="חפש קבוצה"> -->
+
+        <div class="row px-2">
+            {% for group in groups %}
+            <span class="badge bg-info select-group m-1 cursor-pointer" style="width: fit-content;
+                             height: fit-content" data-group-id="{{ group.id }}">{{ group.description }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="p-3 text-center" style="height: 58vh;
+                max-height: 58vh;
+                overflow-y: scroll">
+        <div >
+            <input class="form-control mb-1 form-control-sm sticky-top" style="font-size: 12px; padding: 0.25rem 0.5rem;" id="search_lock" type="text" placeholder="חפש מנעול">
+            <div class="row" id="select_locks_area">
+                {% for lock in locks %}
+                <div class="col-2 p-2 lock-area">
+                    <div class="card card-select-lock cursor-pointer" style="height: 60px" data-lock-id="{{ lock.id }}">
+                        <div class="card-body">{{ lock.alias }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer bg-light">
+    <button type="button" id="cancel_select_locks" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+    <button type="button" id="select_locks" class="btn btn-primary">בחר</button>
+</div>
+<script>
+    $(document).ready(function () {
+
+        sort_locks();
+
+        // $("#search_group").on('input', function () {
+        //     let value = $(this).val();
+        //     $('.select-group').each(function () {
+        //         if ($(this).text().includes(value)) {
+        //             $(this).show();
+        //         } else {
+        //             $(this).hide();
+        //         }
+        //     });
+        // });
+
+        $("#search_lock").on('input', function () {
+            let value = $(this).val();
+            $('.lock-area').each(function () {
+                if ($(this).text().includes(value)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        });
+
+        $('.select-group').click(function () {
+            let group_id = $(this).data('group-id');
+            $.ajax({
+                url: 'get_child_locks/group/' + group_id,
+                method: 'GET',
+                success: function (data) {
+                    let locks = data.locks;
+                    locks.forEach(function (lock) {
+                        $('.card-select-lock').each(function () {
+                            if ($(this).data('lock-id') == lock.id) {
+                                $(this).addClass('selected');
+                            }
+                            after_selected_locks();
+                        });
+                    });
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    if (xhr.status === 401) {
+                        window.location.href = '/login';
+                    }
+                }
+            });
+        });
+    });
+
+    function after_selected_locks() {
+        let count = $('.card-select-lock.selected').length;
+        $('#selected-locks-count').text(count);
+        sort_locks();
+    }
+
+    function sort_locks() {
+
+        var locks = $('.lock-area').toArray();
+
+        locks.sort(function (a, b) {
+            var aSelected = $(a).find('.card').hasClass('selected');
+            var bSelected = $(b).find('.card').hasClass('selected');
+            var aText = $(a).find('.card-body').text().trim().toLowerCase();
+            var bText = $(b).find('.card-body').text().trim().toLowerCase();
+            if (aSelected && !bSelected) {
+                return -1;
+            }
+            if (!aSelected && bSelected) {
+                return 1;
+            }
+            if (aText < bText) {
+                return -1;
+            }
+            if (aText > bText) {
+                return 1;
+            }
+            return 0;
+        });
+        $('#select_locks_area').empty().append(locks);
+
+        $('.card-select-lock').click(function () {
+            $(this).toggleClass('selected');
+            after_selected_locks();
+        });
+
+        $('#select_all_locks').click(function () {
+            $('.card-select-lock').addClass('selected');
+            after_selected_locks();
+        });
+
+        $('#unselect_all_locks').click(function () {
+            $('.card-select-lock').removeClass('selected');
+            after_selected_locks();
+        });
+
+    }
+
+
+</script>

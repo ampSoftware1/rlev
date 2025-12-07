@@ -1,0 +1,51 @@
+<div class="modal-header">
+    <h5 class="modal-title">הוספת קבוצה</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <div class="form-group row">
+        <div class="p-2">
+            <label for="group_name">
+                <i class="bi bi-bookmark"></i> שם הקבוצה
+            </label>
+            <input type="text" class="form-control" id="group_name" style="text-align: right">
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+    <button type="button" id="save_group" class="btn btn-primary">שמור</button>
+</div>
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    $(document).ready(function () {
+        $('#save_group').click(save_group);
+    });
+
+    function save_group() {
+        let group_name = $('#group_name').val();
+
+
+        if (group_name.length == 0) {
+            alert_message('יש לבחור שם לקבוצה', 'error');
+            return;
+        }
+
+        $.ajax({
+            url: 'add_access_group/' + group_name,
+            type: 'GET',
+            success: function (data) {
+                alert_message('הקבוצה נוצרה בהצלחה', 'ok');
+                loadContent('#md-modal-content', 'childs_locks/group');
+            },
+            error: function (data) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+                else {
+                    alert_message(data.message, 'error');
+                }
+            }
+        });
+    }
+</script>

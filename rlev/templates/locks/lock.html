@@ -1,0 +1,553 @@
+{% load custom_filters %}
+<div class="modal-header">
+    <input type="text" hidden id="lock_id" value="{{ details.id }}">
+    <input type="text" class="d-none form-control fs-6 m-0" style="width: fit-content" id="edit_name_input">
+    <h5 class="modal-title" id="lock_alias">{{ details.lock_alias }}</h5>
+    &nbsp;&nbsp;
+    <sapn id="edit_name" class="cursor-pointer" data-toggle="tooltip" data-placement="top" title="ערוך שם"><i class="bi bi-pencil-square"></i></sapn>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+<div class="modal-body">
+    <input id="is_admin" hidden value={% if is_admin %}1{% endif %}>
+    <div class="row">
+        <div class="col-6">
+            <div id="status_area" class="row" style="height: 50px;">
+                <div class="col-8">
+                    <span id="lock_status_locked" data-status="locked" class="lock-status change-status d-none fs-4 cursor-pointer" data-toggle="tooltip" data-placement="top" title="נעול; לחץ כדי לפתוח">נעול <i class="bi bi-lock"></i></span>
+                    <span id="lock_status_unlocked" data-status="unlocked" class="lock-status change-status d-none fs-4 cursor-pointer" data-toggle="tooltip" data-placement="top" title="פתוח; לחץ כדי לנעול">פתוח <i class="bi bi-unlock"></i></span>
+                    <span id="lock_status_unknown" class="lock-status d-none fs-4 text-danger">מצב נעילה לא ידוע</span>
+                    <span id="lock_status_spinner" class="spinner-border fs-4 spinner-border-sm p-1" role="status" aria-hidden="true"></span>
+                    &nbsp;&nbsp;
+                    <span id="refresh_lock_status" class="lock-status d-none fs-5 cursor-pointer" data-toggle="tooltip" data-placement="top" title="רענון מצב נעילה"><i class="bi bi-arrow-repeat"></i></span>
+                </div>
+                <div class="col-3 p-1">
+                    {% if details.passage_mode_active %}
+                    <span id="passage_mode_status" class="badge text-bg-warning"><i class="bi bi-door-open"></i> מצב מעבר פעיל</span>
+                    {% endif %}
+                </div>
+            </div>
+            <table class="mt-2 table table-striped border border-1">
+                <tbody>
+                    <tr>
+                        <td class="fw-bold">תאריך הוספה</td>
+                        <td>{{ details.date_add|time_to_datetime }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">מצב חיבור לגשר</td>
+                        <td>{{ details.has_gateway|gateway_status }}</td>
+                    </tr>
+                    <tr>
+                        <td class="fw-bold">מצב בטריה</td>
+                        <td>{{ details.electric_quantity|battery_status }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div id="LinksContainer" class="col-6"></div>
+    </div>
+    <ul class="nav nav-tabs mt-2">
+        <li class="nav-item">
+            <a class="nav-link nav-link-tabs active lock-child-tab cursor-pointer" data-child-name="permissions" data-toggle="tab">הרשאות</a>
+        </li>
+        {% if is_admin or user.allow_locks_records %}
+        <li class="nav-item">
+            <a class="nav-link nav-link-tabs lock-child-tab cursor-pointer" data-child-name="records" data-toggle="tab">רשומות נעילה</a>
+        </li>
+        {% endif %}
+    </ul>
+    <div class="tab-content" id="child_content" style="height: 30vh;
+                overflow-y: auto"></div>
+    <button class="btn btn-outline-secondary btn-sm mt-2" id="add_child_btn" data-child-name="permissions">
+        <i class="bi bi-plus-circle"></i>
+        <span id="add_child_btn_text"><i class="bi bi-plus-circle"></i> הוסף הרשאה</span>
+    </button>
+</div>
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    $(document).ready(function () {
+        get_lock_status();
+        let is_admin = $("#is_admin").val()
+        if (is_admin) get_links_area();
+        get_lock_list_child('permissions');
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+
+    $('#refresh_lock_status').click(function () {
+        get_lock_status();
+    });
+
+    $('.lock-child-tab').click(function () {
+        let child_name = $(this).data('child-name');
+        get_lock_list_child(child_name);
+        $('.nav-link-tabs').removeClass('active');
+        $(this).addClass('active');
+
+        $(".card-list").removeClass('actice show');
+        $("#" + child_name).addClass('active show')
+    });
+
+    $('#edit_name').click(function () {
+        $('#edit_name_input').removeClass('d-none');
+        $('#edit_name, #lock_alias').addClass('d-none');
+        $('#edit_name_input').val($('#lock_alias').text());
+        $('#edit_name_input').focus();
+    });
+
+    $('#edit_name_input').focusout(function () {
+        $('#edit_name_input').addClass('d-none');
+        $('#edit_name, #lock_alias').removeClass('d-none');
+        let new_alias = $('#edit_name_input').val();
+        if (new_alias.length > 0) {
+            let lock_id = $('#lock_id').val();
+            $('#lock_alias').text(new_alias);
+            $('.lock[data-lock-id="' + lock_id + '"] .card-body').text(new_alias);
+            fetch('change_lock_alias/' + lock_id + '/' + new_alias);
+        }
+    });
+
+    $('#add_child_btn').click(function () {
+        let child_name = $(this).data('child-name');
+        add_child(child_name);
+
+    });
+
+    $('.change-status').click(function () {
+        $('.lock-status').addClass('d-none');
+        $('#lock_status_spinner').removeClass('d-none');
+
+        let lock_id = $("#lock_id").val();
+        let status = $(this).data('status');
+        $.ajax({
+            url: "change_lock_status/" + lock_id + "/" + status,
+            type: "GET",
+            success: function (data) {
+                if (data.errcode == 0) {
+                    get_lock_status();
+                    alert_message('הפעולה בוצעה בהצלחה', 'ok');
+                }
+                else {
+                    alert_message('ארעה שגיאה בביצוע הפעולה', 'error');
+                }
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    });
+
+
+    async function delete_child_item() {
+        let child_id = $(this).data('id');
+        let child_name = $(this).data('child-name');
+        try {
+            let lock_id = $("#lock_id").val();
+
+            let child_type = {
+                "permissions": "הרשאה",
+            }
+
+            await confirmation_modal('האם הנך בטוח שברצונך למחוק את ה' + child_type[child_name] + '?');
+
+            $.ajax({
+                url: "delete_lock_child/" + child_name + "/" + child_id,
+                type: "GET",
+                success: function () {
+                    switch (child_name) {
+                        case 'permissions':
+                            alert_message("ההרשאה נשלחה למחיקה", 'ok');
+                            get_lock_list_child(child_name);
+                            locks_to_sync = []
+                            locks_to_sync.push(lock_id);
+                            transmission(locks_to_sync);
+                    }
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    if (xhr.status === 401) {
+                        window.location.href = '/login';
+                    }
+                }
+            });
+        } catch (error) {
+        }
+    }
+
+    function get_lock_status() {
+        $('.lock-status').addClass('d-none');
+        $('#lock_status_spinner').removeClass('d-none');
+
+        let lock_id = $("#lock_id").val();
+        $.ajax({
+            url: "check_lock_status/" + lock_id,
+            type: "GET",
+            success: function (data) {
+                if (data.state == 0) {
+                    $('#lock_status_locked').removeClass('d-none');
+                } else if (data.state == 1) {
+                    $('#lock_status_unlocked').removeClass('d-none');
+                } else {
+                    $('#lock_status_unknown').removeClass('d-none');
+                }
+                $('#lock_status_spinner').addClass('d-none');
+                $('#refresh_lock_status').removeClass('d-none');
+            },
+            error: function () {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+                else {
+                    $('#lock_status_unknown').removeClass('d-none');
+                    $('#lock_status_spinner').addClass('d-none');
+                    $('#refresh_lock_status').removeClass('d-none');
+                }
+            }
+
+        });
+    }
+
+
+    function get_lock_list_child(child_name, set_empty = true) {
+        let child_list_div = $('#child_content');
+        if (set_empty) child_list_div.empty();
+
+        let childs_type = {
+            permissions: {
+                item: 'הרשאה',
+                items: 'הרשאות',
+                fields: [
+                    { "name": 'person_name', "description": 'שם אורח' },
+                    { "name": 'object_description', "description": 'תיאור אמצעי זיהוי' },
+                    { "name": 'type_permission', "description": 'סוג הרשאה' },
+                    { "name": 'status', "description": 'סטטוס' },
+                    { "name": 'actions', "description": '' }
+                ],
+                symbol_fill: '<i class="bi bi-shield-fill"></i>',
+                function_on_click: edit_peremission
+            }, records: {
+                item: 'רשומה',
+                fields: [
+                    { "name": 'date', "description": 'תאריך ושעה' },
+                    { "name": 'record_type_description', "description": 'סוג רשומה' },
+                    { "name": 'done_by', "description": 'בוצע על ידי' },
+                    { "name": 'object_record_description', "description": 'תיאור אמצעי זיהוי' },
+
+                ]
+            }
+        };
+
+        let lock_id = $("#lock_id").val();
+        let item = childs_type[child_name].item
+        if (child_name != 'records') {
+            $('#add_child_btn_text').html('הוסף ' + item);
+            $('#add_child_btn').data('child-name', child_name);
+            $('#add_child_btn').removeClass('d-none');
+        }
+        else {
+            $('#add_child_btn').addClass('d-none');
+        }
+        $.ajax({
+            url: "get_lock_child_list/" + child_name + "/" + lock_id,
+            type: "GET",
+            success: function (data) {
+                if (set_empty == false) {
+                    if ($('#lock_table_' + child_name).length == 0) return;
+                }
+                let child_list = data.child_list;
+                if (child_list.length > 0) {
+                    child_list_div.removeClass('d-flex justify-content-center align-items-center');
+                    let table = $('<table>').addClass('table table-striped table-hover small table-sm table-clickble table-fixed').css({ 'cursor': 'pointer' }).attr('id', 'lock_table_' + child_name);
+                    let thead = $('<thead>').addClass('sticky-top bg-light').append($('<tr>'));
+                    for (let i = 0; i < childs_type[child_name].fields.length; i++) {
+                        thead.append($('<th>').text(childs_type[child_name].fields[i]['description']))
+                    }
+                    table.append(thead);
+
+                    let tbody = $('<tbody>');
+                    let child_list = data.child_list;
+                    for (let d = 0; d < child_list.length; d++) {
+                        let tr = $('<tr>');
+                        for (let f = 0; f < childs_type[child_name].fields.length; f++) {
+                            let txt = '';
+                            let td = $('<td>');
+                            field_name = childs_type[child_name].fields[f]['name'];
+
+                            value = child_list[d][childs_type[child_name].fields[f]['name']];
+                            switch (field_name) {
+                                case 'status':
+                                    switch (value) {
+                                        case 0:
+                                            txt = '<i class="bi bi-check-circle text-success"></i> פעיל';
+                                            td.addClass('text-success');
+                                            break;
+                                        case 1:
+                                            txt = '<i class="bi bi-filter-circle text-warning"></i> ממתין לשידור';
+                                            td.addClass('text-warning');
+                                            break;
+                                        case 2:
+                                        case 3:
+                                            txt = '<i class="bi bi-exclamation-circle text-danger"></i> מיועד למחיקה';
+                                            td.addClass('text-danger');
+                                            break;
+                                        case 4:
+                                            txt = '<i class="bi bi-x-circle text-secondary"></i> לא פעיל';
+                                            td.addClass('text-secondary');
+                                            break;
+                                    }
+                                    break;
+                                case 'type_permission':
+                                    switch (value) {
+                                        case 1:
+                                            txt = ' <i class="bi bi-shield"></i> קבוע';
+                                            break;
+                                        case 2:
+                                            txt = ' <i class="bi bi-hourglass-split"></i> זמני';
+                                            break;
+                                        case 3:
+                                            txt = '<i class="bi bi-arrow-clockwise"></i> מחזורי';
+                                            break;
+                                    }
+                                    break;
+                                case 'actions':
+                                    if (child_list[d]['status'] != 3) {
+                                        txt = '<span class="cursor-pointer"><i class="bi bi-trash"></i></span>';
+                                    }
+                                    break;
+                                case 'object_description':
+                                    type_object = child_list[d]['type_object'];
+
+                                    switch (type_object) {
+                                        case 8:
+                                            txt = '<i class="bi bi-credit-card"></i> ' + value;
+                                            break;
+                                        case 16:
+                                            txt = ' <i class="bi bi-phone"></i> ' + value;
+                                            break;
+                                    }
+                                    break;
+                                case 'object_record_description':
+                                    object_record_description = child_list[d]['object_record_description'];
+                                    type_object = child_list[d]['type_object_id'];
+                                    if (type_object == 8) type_object_icon = '<i class="bi bi-credit-card"></i> ';
+                                    else if (type_object == 16) type_object_icon = '<i class="bi bi-phone"></i> ';
+                                    else type_object_icon = '';
+
+                                    txt = type_object_icon + object_record_description;
+                                
+                                    break;
+                                default:
+                                    txt = value;
+                                    break;
+                            }
+
+                            td.html(txt);
+                            if (child_name == 'permissions' && (child_list[d]['status'] == 1 || child_list[d]['status'] == 4)) td.addClass('text-secondary');
+                            if (field_name != 'actions') td.click(childs_type[child_name]['function_on_click']);
+                            else td.click(delete_child_item);
+                            td.attr('data-id', child_list[d]['id']).attr('data-child-name', child_name);
+                            tr.append(td)
+                        }
+                        tbody.append(tr);
+                    }
+                    table.append(tbody);
+                    child_list_div.html(table);
+                }
+                else {
+                    child_list_div.addClass('d-flex justify-content-center align-items-center');
+                    child_list_div.html('<div class="text-center" id="lock_table_' + child_name + '">' + childs_type[child_name]['symbol_fill'] + ' אין ' + childs_type[child_name]['items'] + ' להצגה</div>');
+                }
+
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function get_links_area() {
+        let links_type = [{
+            type: 'group',
+            title: 'קבוצות גישה',
+            item: 'קבוצה',
+        }, {
+            type: 'user',
+            title: 'משתמשים מורשים',
+            item: 'משתמש',
+        }];
+
+        for (let i = 0; i < links_type.length; i++) {
+            let type_link = links_type[i].type;
+
+            let divHeader = $('<div>').addClass("d-flex justify-content-between").attr('id', type_link + 'Header');
+            $(divHeader).append(
+                $('<h5>').text(links_type[i].title),
+                $('<div>').append(
+                    $('<span>').addClass('badge rounded-pill bg-primary').html('<i class="bi bi-plus-circle"></i> הוסף ' + links_type[i].item).attr('id', 'add' + type_link + 'Btn').attr('data-type-link', type_link).click(get_lock_link_options).css({ 'cursor': 'pointer' }),
+                )
+            );
+
+            let divBody = $('<div>').addClass("d-flex border rounded m-1 p-1 flex-wrap justify-content-start align-items-start").attr('data-type-link', type_link).attr('id', type_link + 'Container').css({ 'max-width': '100%', 'height': '10vh', 'overflow-y': 'auto', 'overflow-x': 'auto' });
+
+            let Container = $('<div>').addClass("m-2");
+            $(Container).append(divHeader);
+            $(Container).append(divBody);
+            $('#LinksContainer').append(Container);
+
+            get_lock_link_list(type_link);
+        }
+    }
+
+    function get_lock_link_list(type_link) {
+        lock_id = $("#lock_id").val();
+
+        $.ajax({
+            url: "get_lock_link_list/" + type_link + '/' + lock_id,
+            type: "GET",
+            success: function (data) {
+                link_list = data.link_list;
+
+                $('#' + type_link + 'Container').empty();
+                for (let i = 0; i < link_list.length; i++) {
+                    let linkItem = $('<div>').addClass('d-flex justify-content-between align-items-center bg-secondary rounded m-1').css(
+                        'width', 'fit-content'
+                    );
+                    let span = $('<span>').addClass('text-white fw-bold mx-1').css('font-size', 'small').text(link_list[i].name);
+                    let btn = $('<button>').addClass('btn btn-secondary rounded-end p-0 px-1 lock_link_btn').css('font-size', 'small').text('x').attr('data-id', link_list[i].id).click(remove_link_from_lock);
+                    $(linkItem).append(span);
+                    $(linkItem).append(btn);
+                    $('#' + type_link + 'Container').append(linkItem)
+                }
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+
+    function get_lock_link_options() {
+        let lock_id = $("#lock_id").val();
+        let type_link = $(this).data('type-link');
+        let btn = $('#add' + type_link + 'Btn');
+        let btn_position = btn.position();
+        let btn_position_height = btn.outerHeight();
+
+        $('#selectItem' + type_link).remove();
+        $.ajax({
+            url: "get_lock_link_options/" + type_link + '/' + lock_id,
+            type: "GET",
+            success: function (data) {
+                link_options = data.link_options;
+
+                let SelectInput = $('<select>').addClass('form-select border border-primary rounded')
+                    .attr('id', 'selectItem' + type_link).attr('data-type-link', type_link)
+                    .attr('multiple', 'multiple')
+                    .css({ 'width': '25vh', 'position': 'absolute', 'left': btn_position.left + 'px', 'top': btn_position.top + btn_position_height + 'px' })
+                    .on('change', add_link_to_lock)
+                    .on('blur', function () {
+                        $(this).remove();
+                    });
+
+                for (let i = 0; i < link_options.length; i++) {
+                    let option = $('<option>').attr('value', link_options[i].id).text(link_options[i].name);
+                    SelectInput.append(option);
+                }
+
+                $('#' + type_link + 'Header').append(SelectInput);
+                SelectInput.focus();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+
+        });
+    }
+
+    function add_link_to_lock() {
+        let type_link = $(this).data('type-link');
+        let lock_id = $("#lock_id").val();
+        let link_id = $(this).val();
+
+        $.ajax({
+            url: "add_link_to_lock/" + type_link + '/' + lock_id + '/' + link_id,
+            type: "GET",
+            success: function (data) {
+                get_lock_link_list(type_link);
+                $('#selectItem' + type_link).remove();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+
+    }
+
+    function remove_link_from_lock() {
+        let link_object = $(this).parent();
+        let type_link = link_object.parent().data('type-link');
+        let object_id = $(this).data('id');
+
+        $.ajax({
+            url: "remove_link_from_lock/" + type_link + "/" + object_id,
+            type: "GET",
+            success: function (data) {
+                get_lock_link_list(type_link);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function edit_peremission() {
+        let peremission_id = $(this).data('id');
+        loadContent('#md-modal-content', 'permission/' + peremission_id);
+        $('#modal-md').modal('show');
+    }
+
+    function add_child(child_name) {
+        let lock_id = $("#lock_id").val();
+        if (child_name == 'permissions') {
+            data = {
+                lock_id: lock_id,
+                by_object: 'lock',
+            };
+            $.ajax({
+                url: 'add_permissions',
+                type: 'POST',
+                dataType: 'html',
+                data: JSON.stringify(data),
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                success: function (data) {
+                    $('#md-modal-content').html(data);
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    if (xhr.status === 401) {
+                        window.location.href = '/login';
+                    }
+                }
+            });
+            $('#modal-md').modal('show');
+        }
+        if (child_name == 'phones') {
+            loadContent('#md-modal-content', 'phone');
+            $('#modal-md').modal('show');
+        }
+    }
+
+
+
+
+</script>

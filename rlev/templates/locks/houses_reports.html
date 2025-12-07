@@ -1,0 +1,320 @@
+<div class="m-1 p-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="text-end">
+            <h5 class="modal-title">דוח מלונית</h5>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <select id="select_house_report" class="form-control form-control-sm" style="width: 25vh;">
+                <option>בחר דוח לטעינה...</option>
+            </select>
+
+            <span class="fs-4">
+                <i class="bi bi-file-earmark-medical text-secondary mx-1 cursor-pointer print-report" data-toggle="tooltip" title="הדפס דוח תחזוקה"
+                    id="print_report_upkeep" data-type-report="upkeep"></i>
+                <span id="spinner_print_upkeep" class="spinner-border spinner-border-sm d-none "></span>
+                <i class="bi bi-file-earmark-ruled text-secondary mx-1 cursor-pointer print-report" data-toggle="tooltip" title="הדפס דוח פרטים"
+                    id="print_report_details" data-type-report="details"></i>
+                <span id="spinner_print_details" class="spinner-border spinner-border-sm d-none"></span>
+            </span>
+
+            <span class="fs-4">
+                <i class="bi bi-trash text-secondary mx-1 cursor-pointer" data-toggle="tooltip" title="מחק"
+                    id="delete_report"></i>
+            </span>
+        </div>
+    </div>
+</div>
+<div class="modal-body" style="max-height: 70vh;">
+
+    <div class="d-flex justify-content-between">
+        <div>
+            <div class="d-flex align-items-center">
+                <div class="mx-2">
+                    <input type="hidden" id="report_id">
+                    <lable for="date_report">תאריך</lable>
+                    <input type="date" class="form-control" id="report_date">
+                </div>
+                <div class="mx-2">
+                    <lable for="date_report">תיאור</lable>
+                    <input type="text" class="form-control" id="report_description">
+                </div>
+            </div>
+            <div class="my-2 d-flex align-items-center">
+                <button id="create_new_report" class="mx-2 btn btn-primary btn-sm">צור דו"ח חדש</button>
+                <span class="ms-2" style="font-size: small;">שכפל לתאריך-</span>
+                <input id="duplicate_report_date" type="date" class="form-control form-control-sm me-2" style="width: auto;" />
+                <button id="duplicate_report" class="btn btn-primary btn-sm">שכפל</button>
+            </div>
+        </div>
+        <div>
+            <div class="d-flex align-items-center">
+                <div class="mx-2">
+                    <input type="text" class="form-control filters-houses-records" id="search_houses_records" placeholder="חיפוש חופשי..">
+                </div>
+            </div>
+            <div class="my-2 d-flex align-items-center">
+                <div class="form-check form-switch mx-2">
+                    <input class="form-check-input filters-houses-records" type="checkbox" role="switch" id="cleanFilter">
+                    <label class="form-check-label" for="cleanFilter">ניקוי</label>
+                </div>
+                <div class="form-check form-switch mx-2">
+                    <input class="form-check-input filters-houses-records" type="checkbox" role="switch" id="cleanCheckOutFilter">
+                    <label class="form-check-label" for="cleanCheckOutFilter">ניקוי צ'ק-אאוט</label>
+                </div>
+                <div class="form-check form-switch mx-2">
+                    <input class="form-check-input filters-houses-records" type="checkbox" role="switch" id="mealFilter">
+                    <label class="form-check-label" for="mealFilter">ארוחה</label>
+                </div>
+                <div class="form-check form-switch mx-2">
+                    <input class="form-check-input filters-houses-records" type="checkbox" role="switch" id="bedFilter">
+                    <label class="form-check-label" for="faultFilter">החלפת מצעים</label>
+                </div>
+                <div class="form-check form-switch mx-2">
+                    <input class="form-check-input filters-houses-records" type="checkbox" role="switch" id="faultFilter">
+                    <label class="form-check-label" for="faultFilter">תקלה בחדר</label>
+                </div>
+               
+            </div>
+            <div class="my-2 d-flex align-items-center">
+                <div class="form-check form-switch mx-2">
+                    <input class="form-check-input filters-houses-records" type="checkbox" role="switch" id="onlyHostings">
+                    <label class="form-check-label" for="onlyHostings">דירות מאוכלסות בלבד</label>
+                </div>
+            </div>
+        </div>               
+    </div>
+
+    <div id="report_records_area" class="border rounded p-2" style="overflow: auto; max-height: 50vh; height: 50vh;">
+
+    </div>
+</div>
+<div class="modal-footer bg-light">
+    <button type="button" id="close_reports" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+</div>
+
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    $(document).ready(function () {
+
+        $('[data-toggle="tooltip"]').tooltip();
+        const cuurentDate = new Date().toLocaleDateString('en-CA');
+        get_report("date", cuurentDate);
+        $('#report_date').on('blur keydown', function (event) {
+            if (event.type === 'blur' || (event.type === 'keydown' && event.key === 'Enter')) {
+                let selectedDate = $(this).val();
+                if (!selectedDate) return;
+                selectedDate = new Date(selectedDate).toLocaleDateString('en-CA');
+                get_report("date", selectedDate);
+            }
+        });
+        $("#create_new_report").click(function () {
+            let currentDate = $('#report_date').val();
+            if (!currentDate) cuurentDate = new Date().toLocaleDateString('en-CA');
+            get_report("new", currentDate);
+        });
+        $("#duplicate_report").click(function () {
+            let reportId = $('#report_id').val();
+            let newDate = $('#duplicate_report_date').val();
+            if (!newDate) return;
+            newDate = new Date(newDate).toLocaleDateString('en-CA');
+            get_report("duplicate", reportId + ";" + newDate);
+        });
+        $("#select_house_report").change(function () {
+            let reportId = $(this).val();
+            if (reportId) {
+                get_report("id", reportId);
+                $(this).val(0);
+            }
+        });
+        $("#delete_report").click(function () {
+            let reportId = $("#report_id").val();
+            $.ajax({
+                url: 'delete_houses_report/' + reportId,
+                type: 'GET',
+                dataType: 'json',
+                success: function () {
+                    $("#modal-xl").modal('hide');
+                }
+            })
+        });
+        $(".print-report").click(print_report);
+        $("#report_description").change(save_report);
+        $(".filters-houses-records").on('change keyup', filter_houses_records);
+        $('#report_records_area').on('change', 'input[type="checkbox"], input[type="text"]', save_report);
+
+    });
+
+    function filter_houses_records() {
+        let search_val = $("#search_houses_records").val();
+        let clean = $("#cleanFilter").is(':checked');
+        let clean_check_out = $("#cleanCheckOutFilter").is(":checked");
+        let meal = $("#mealFilter").is(":checked");
+        let fault = $("#faultFilter").is(":checked");
+        let bed = $("#bedFilter").is(":checked");
+        let only_hostings = $("#onlyHostings").is(":checked");
+
+        if (search_val === "" && !clean && !clean_check_out && !meal && !fault && !bed && !only_hostings) {
+            $(".record_area").show();
+            return;
+        }
+
+        $(".record_area").each(function () {
+            let house = $(this);
+
+            let descriptionMatch = search_val === "" || house.find("span.search-in").toArray().some(span => {
+                return $(span).text().includes(search_val);
+            });
+
+            let cleanMatch = clean && house.find(".clean").is(':checked');
+            let cleanCheckOutMatch = clean_check_out && house.find(".clean_check_out").is(':checked');
+            let mealMatch = meal && house.find(".meal").is(':checked');
+            let faultMatch = fault && house.find(".fault").is(':checked');
+            let bedMatch = bed && house.find(".bed").is(':checked');
+            let onlyHostingsMatch = !only_hostings || house.hasClass('active-hosting');
+
+            if (descriptionMatch && (cleanMatch || cleanCheckOutMatch || mealMatch || faultMatch || bedMatch || (!clean && !clean_check_out && !meal && !fault && !bed)) && onlyHostingsMatch) {
+                house.show();
+            } else {
+                house.hide();
+            }
+        });
+    }
+
+    function save_report() {
+        let reportId = $("#report_id").val();
+        let report_description = $("#report_description").val();
+        let houses_records = get_houses_records();
+
+        data = {
+            'report_description': report_description,
+            'houses_records': houses_records
+        }
+        $.ajax({
+            url: 'update_houses_report/' + reportId,
+            method: 'POST',
+            data: JSON.stringify(data),
+            dataType: 'json',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function (response) {
+
+            },
+            error: function (error) {
+                alert_message("שגיאה בשמירת הדוח", "error")
+            }
+        });
+    }
+
+    function print_report() {
+
+
+        let report_id = $("#report_id").val();
+        let houses_records_ids = get_houses_records_ids()
+        let type_report = $(this).data('type-report');
+
+        data = {
+            'type_report': type_report,
+            'report_id': report_id,
+            'houses_records_ids': houses_records_ids
+        }
+
+        $("#spinner_print_" + type_report).removeClass('d-none');
+        let button = $(this)
+        button.addClass('d-none');
+
+        $.ajax({
+            url: 'get_houses_report_pdf',
+            method: 'POST',
+            data: JSON.stringify(data),
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function (data) {
+                $("#spinner_print_" + type_report).addClass('d-none');
+                button.removeClass('d-none');
+
+                const url = URL.createObjectURL(data);
+
+                $('#pdf-frame').attr('src', url);
+
+                $('#pdf-frame').on('load', function () {
+                    setTimeout(function () {
+                        $('#pdf-frame')[0].contentWindow.print();
+                    }, 500);
+                });
+            },
+            error: function (jqXHR, textStatus, errorThrown) {
+                $("#spinner_print_" + type_report).addClass('d-none');
+                button.removeClass('d-none');
+
+                console.error("שגיאה בהדפסת הדוח:", textStatus, errorThrown);
+                alert_message("שגיאה בהדפסת הדוח", "error");
+            }
+        });
+    }
+
+    function get_report(type_get, value) {
+        $.ajax({
+            url: 'get_houses_report/' + type_get + '/' + value,
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                $("#report_id").val(data.id);
+                $("#report_date").val(data.report_date);
+                $("#report_description").val(data.report_description);
+                $("#report_records_area").html(data.html_houses_records);
+                const $selectHouseReport = $('#select_house_report');
+
+                $selectHouseReport.empty().append(
+                    $('<option>', {
+                        value: 0,
+                        text: "בחר דוח לטעינה..."
+                    })
+                );
+
+                $.each(data.list_reports, function (index, report) {
+                    $selectHouseReport.append(
+                        $('<option>', {
+                            value: report.id,
+                            text: report.description
+                        })
+                    );
+                });
+            }
+        })
+    }
+
+    function get_houses_records() {
+        let houses_records = {};
+        $('.record_area').each(function () {
+            const houseReocrdId = $(this).data('id');
+
+            houses_records[houseReocrdId] = {
+                clean: $(this).find('.clean').is(':checked'),
+                clean_check_out: $(this).find('.clean_check_out').is(':checked'),
+                meal: $(this).find('.meal').is(':checked'),
+                fault: $(this).find('.fault').is(':checked'),
+                bed: $(this).find('.bed').is(':checked'),
+                note: $(this).find('.note').val()
+            };
+        });
+        return houses_records
+    }
+
+    function get_houses_records_ids() {
+        let housesIds = [];
+        $('#report_records_area .record_area:visible').each(function () {
+            let housesId = $(this).data('id');
+            if (housesId) {
+                housesIds.push(housesId);
+            }
+        });
+        return housesIds;
+    }
+
+
+</script>

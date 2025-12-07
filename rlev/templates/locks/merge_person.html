@@ -1,0 +1,72 @@
+<div class="modal-header">
+    <h5 class="modal-title">מיזוג אנשי קשר</h5>
+    <button type="button" class="btn-close btn-block" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+
+    <input type="text" hidden id="source_person_id" value="{{ source_person_id}}">
+
+    <div class="form-group">
+        <label for="card_person_name" class="form-label">איש קשר למיזוג</label>
+        <input type="text" class="form-control" id="source_person_name" disabled value="{{ source_person_name }}">
+    </div>
+
+    <div class="form-group">
+        <label for="target_person_id" class="form-label">מיזוג אל</label>
+        <select class="form-select" id="target_person_id">
+            <option value="0">בחר אורח</option>
+            {% for person in persons %}
+            <option value="{{ person.id }}">{{ person.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+    <small class="text-danger">לתשומת לב! פעולה זו תעביר את כל אמצעי הזיהוי והאירוחים המשוייכים לאיש הקשר, ואיש הקשר ימחק</small>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-primary" id="do_merge_person">ביצוע</button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+</div>
+
+
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+        $('#do_merge_person').click(do_merge_person);
+    });
+
+
+    function do_merge_person() {
+        let card_id = $("#card_id").val();
+        let source_person_id = $("#source_person_id").val();
+        let target_person_id = $("#target_person_id").val();
+        if (target_person_id == "0") {
+            alert_message("יש לבחור איש קשר למיזוג", "error");
+            return;
+        }
+
+        $.ajax({
+            url: "do_merge_person/" + source_person_id + "/" + target_person_id,
+            type: "GET",
+            success: function (response) {
+                alert_message('המיזוג בוצע בהצלחה', 'ok');
+                refresh_persons_windows();
+                $('#modal-md').modal('hide');
+                $('#modal-lg').modal('hide');
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+                else {
+                    console.log(xhr)
+                    alert_message(xhr.responseJSON.error, 'error')
+                }
+            }
+        });
+    }
+
+</script>

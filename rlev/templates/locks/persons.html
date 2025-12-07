@@ -1,0 +1,327 @@
+{% load custom_filters %}
+<div class="sticky-top p-3 bg-white border-bottom" style="z-index: 1000" id="persons_win">
+    <div class="">
+        <div class="row mb-2">
+            <div class="col-2">
+                <span class="fs-4 fw-bold ">אנשי קשר</span>
+            </div>
+            <div class="col-3 pr-2">
+                <span>חיפוש חופשי</span>
+                <input type="text" class="form-control" placeholder="חפש..." id="search-input">
+                <small style="font-size: small" id="search_reverse_value"></small> <small style="font-size: small" id="search_reverse_card"></small>
+            </div>
+            <div class="col-2">
+                <span>תפקיד</span>
+                <select class="form-select" id="filter_role">
+                    <option value="all">הכל</option>
+                    {% for role in roles %}
+                    <option>{{ role }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-1">
+                <!-- <span> מיון לפי</span>
+                <select class="form-select" id="sort_by" style="width: 150px;">
+                    <option value="name">שם</option>
+                    <option value="role">תפקיד</option>
+                    <option value="date">תאריך הוספה</option>
+                </select> -->
+            </div>
+            <div class="col-1 ">
+                <!-- border rounded -->
+                <!-- <div class="form-check form-check-inline">
+                    <input class="form-check-input filter-type-card" type="checkbox" id="not_only_coffee_cards" checked>
+                    <label class="form-check-label" for="not_only_coffee_cards">מנעולים</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input filter-type-card" type="checkbox" id="have_coffee_cards">
+                    <label class="form-check-label" for="have_coffee_cards">קפה</label>
+                </div>
+                <div class="form-check form-check">
+                    <input class="form-check-input filter-type-card" type="checkbox" id="have_coffee_cards_faulty">
+                    <label class="form-check-label" for="have_coffee_cards_faulty">קפה לא תקין</label>
+                </div> -->
+            </div>
+            <div class="col-3 text-end">
+                <span class="fs-4">
+                    <i class="bi bi-download mx-1 cursor-pointer d-none cards-actions" data-toggle="tooltip"
+                        title="הורד רשימת כרטיסים" id="download_excel_cards">
+                    </i>
+                    <i class="bi bi-shield-slash mx-1 cursor-pointer d-none cards-actions" data-toggle="tooltip"
+                        title="הסר הרשאות" id="remove_permissions">
+                    </i>
+                    <i class="bi bi-shield-plus mx-1 d-none cursor-pointer cards-actions" id="add_permissions"
+                        data-toggle="tooltip" title="הוסף הרשאות"></i>
+                    <i class="bi bi-trash mx-1 cursor-pointer d-none cards-actions" data-toggle="tooltip"
+                        title="מחק אמצעי זיהוי" id="delete_cards">
+                    </i>
+                    <i class="bi bi-person-plus mx-1 cursor-pointer" data-toggle="tooltip" title="הוסף אורח"
+                        id="add_person"></i>
+                </span>
+            </div>
+        </div>
+        <div id="selected-cards-area" class="d-flex justify-content-start align-items-center d-none"
+            style="font-size: small; width: fit-content;">
+            <span class="fw-bold"> נבחרו <span id="selected-cards-count">0</span> אמצעי זיהוי </span>
+            <span class="badge mx-2 bg-primary float-end cursor-pointer" id="unselect-all">בטל הכל</span>
+            <span class="badge mx-1 bg-primary float-end mx-1 cursor-pointer" id="select-all">בחר הכל</span>
+            <span class="badge mx-1 bg-primary float-end mx-1 cursor-pointer" id="reset-select">אפס הכל</span>
+        </div>
+    </div>
+</div>
+
+
+<div id="persons_container" class="p-3">
+</div>
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    var identifications = { "cards": [], "phones": [] }
+
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+        load_persons();
+
+
+        $('#select-all').click(function () {
+            $('.identification').addClass('identification_selected').removeClass('bg-white');
+            refresh_count_identification_selected();
+        });
+
+        $('#unselect-all').click(function () {
+            $('.identification').removeClass('identification_selected').addClass('bg-white');
+            refresh_count_identification_selected();
+        });
+
+        $("#reset-select").click(function(){
+            $('.identification').removeClass('identification_selected').addClass('bg-white');
+            identifications = { "cards": [], "phones": [] }
+            refresh_count_identification_selected();
+        });
+
+        $('#search-input').keyup(function (event) {
+            if (event.keyCode == 13 || event.keyCode == 'TAB') load_persons();
+        });
+        $("#filter_role").change(load_persons);
+        // $(".filter-type-card").change(function () {
+        //     filter_persons();
+        // });
+
+        // $('#sort_by').change(sort_cards);
+
+
+
+        $('#remove_permissions').click(remove_permissions);
+        $('#add_permissions').click(add_permissions);
+        $('#delete_cards').click(delete_cards);
+        $('#add_person').click(add_person);
+        $('#download_excel_cards').click(download_excel_cards);
+
+    });
+
+    function load_persons(data = {}) {
+
+        let role = $("#filter_role").val();
+        let search_input = $('#search-input').val();
+
+        if (role != 'all') data.role = role;
+        if (search_input.length > 0) data.search_person = search_input;
+        
+
+        $.ajax({
+            url: 'persons_list',
+            type: 'POST',
+            data: JSON.stringify(data),
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            dataType: 'html',
+            success: function (html) {
+                if (data.current_index) html = $("#persons_container").html() + html;
+                $("#persons_container").html(html);
+
+                $('.identification').each(function () {
+                    if ($(this).hasClass('card-item')) {
+                        let card_id = $(this).data('card-id');
+                        if (identifications.cards.includes(card_id)) {
+                             $(this).toggleClass('identification_selected bg-white');
+                        }
+                    } else if ($(this).hasClass('phone-item')) {
+                        let phone_id = $(this).data('phone-id');
+                        if (identifications.phones.includes(phone_id)) {
+                            $(this).toggleClass('identification_selected bg-white');
+                        }
+                    }
+                });
+                refresh_count_identification_selected(false);
+            }
+        })
+    }
+
+
+
+    function refresh_count_identification_selected(scan = true) {
+
+        if (scan) {
+            $('.identification').each(function () {
+                let add = $(this).hasClass('identification_selected');
+                if ($(this).hasClass('card-item')) {
+                    let card_id = $(this).data('card-id');
+                    if (add && !identifications.cards.includes(card_id)) identifications.cards.push(card_id);
+                    if (!add) identifications.cards = identifications.cards.filter(id => id !== card_id);
+                } else if ($(this).hasClass('phone-item')) {
+                    let phone_id = $(this).data('phone_id');
+                    if (add && !identifications.phones.includes(phone_id)) identifications.phones.push(phone_id);
+                    if (!add) identifications.phones = identifications.phones.filter(id => id !== phone_id);
+                }
+            });
+        }
+
+        let count = identifications.cards.length + identifications.phones.length;
+        if (count > 0) {
+            $('#selected-cards-area').removeClass('d-none');
+            $('#selected-cards-count').text(count);
+            $('.cards-actions').removeClass('d-none');
+        } else {
+            $('#selected-cards-area').addClass('d-none');
+            $('.cards-actions').addClass('d-none');
+        }
+
+    }
+
+
+
+    async function remove_permissions() {
+        let cards = identifications.cards;
+        let phones = identifications.phones;
+
+        await confirmation_modal('האם הנך בטוח שברצונך למחוק את ההרשאות של ' + (cards.length + phones.length) + ' אמצעי הזיהוי שנבחרו?');
+
+        $.ajax({
+            url: 'remove_permissions',
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            contentType: 'application/json',
+            data: JSON.stringify({ cards: cards, phones: phones }),
+            success: function (response) {
+                locks_to_sync = response.locks_to_sync
+                transmission(locks_to_sync);
+                alert_message('ביטול ההרשאות נשלח לשידור', 'ok');
+                unselect_all_cards();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function add_person() {
+        $("md-modal-content").html("");
+        loadContent('#lg-modal-content', 'person');
+        $('#modal-lg').modal('show');
+    }
+
+    function add_permissions() {
+        let cards = identifications.cards;
+        let phones = identifications.phones;
+
+        data = {
+            cards: cards,
+            phones: phones,
+            by_object: 'multy',
+        };
+
+        $.ajax({
+            url: 'add_permissions',
+            type: 'POST',
+            dataType: 'html',
+            data: JSON.stringify(data),
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function (data) {
+                $('#md-modal-content').html(data);
+                $('#modal-md').modal('show');
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+        
+    }
+
+    async function delete_cards() {
+        let cards = identifications.cards;
+        let phones = identifications.phones;
+
+        await confirmation_modal('האם הנך בטוח שברצונך למחוק את ' + (cards.length + phones.length) + ' אמצעי הזיהוי שנבחרו?');
+
+        console.log(JSON.stringify({ cards: cards, phones: phones }));
+
+        $.ajax({
+            url: 'delete_cards',
+            type: 'POST',
+            data: JSON.stringify({ cards: cards, phones: phones }),
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function (response) {
+                if (response.success) {
+                    locks_to_sync = response.locks_to_sync
+                    alert_message("אמצעי הזיהוי נשלחו למחיקה", 'ok');
+                    transmission(locks_to_sync);
+                } else {
+                    alert_message(response.error, 'error');
+                }
+                unselect_all_cards();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function download_excel_cards() {
+        let cards = identifications.cards;
+
+        $.ajax({
+            url: 'get_excel_cards',
+            type: 'POST',
+            data: JSON.stringify({ cards: cards }),
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            xhrFields: {
+                responseType: 'blob'
+            },
+            success: function (response) {
+                let blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                let url = window.URL.createObjectURL(blob);
+
+                let a = document.createElement('a');
+                a.href = url;
+                a.download = 'כרטיסים.xlsx';
+                document.body.appendChild(a);
+                a.click();
+
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                } else {
+                    console.error('Error downloading the file:', textStatus, errorThrown);
+                }
+            }
+        });
+    }
+
+</script>

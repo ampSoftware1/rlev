@@ -1,0 +1,79 @@
+{% for house_record in houses_records %}
+<div class="m-2 border rounded row p-1 house_area {% if house_record.first_hosting %} active-hosting {% endif %}"  data-id="{{ house_record.id }}">
+    <div class="col-2 d-flex flex-column align-items-center">
+        <span class="fs-5 fw-bold {% if house_record.hosting_check_in or house_record.hosting_check_out %} text-warning {% elif house_record.first_hosting %} text-success {% endif %}">
+            {{ house_record.name }}</span>
+        {% if house_record.hosting_check_out %}
+        <span style="font-size: small;"><span class="fw-bold"><i class="bi bi-box-arrow-in-right"></i> צ'ק אאוט:
+            </span>{{ house_record.hosting_check_out.guest_name }}</span>
+        {% endif %}
+        {% if house_record.hosting_check_in %}
+        <span style="font-size: small;"><span class="fw-bold"><i class="bi bi-box-arrow-in-left"></i> צ'ק אין: </span>{{ house_record.hosting_check_in.guest_name }}</span>
+        {% endif %}
+        
+    </div>
+    <div class="col-3 d-flex flex-column" style="font-size: small;">
+        {% if house_record.first_hosting %}
+        <span class="search-in"><span class="fw-bold">שם אורח:</span> {{ house_record.first_hosting.guest_name }}</span>
+        <span><span class="fw-bold">סטטוס:</span> {{ house_record.first_hosting.status_guest }}</span>
+        {% if not house_record.first_hosting.guest_is_patient %}
+        <span class="search-in"><span class="fw-bold">שם מטופל:</span> {{ house_record.first_hosting.patient.name }}</span>
+        {% endif %}
+        <span>{{ house_record.first_hosting.hospital_ward }}</span>
+        {% endif %}
+    </div>
+    <div class="col-3" style="font-size: small;">
+        {% if house_record.first_hosting %}
+        <span class="fw-bold">תאריך התחלה:</span> {{ house_record.first_hosting.lodging_start }}<br>
+        <span class="fw-bold">תאריך סיום:</span> {{ house_record.first_hosting.lodging_end }}<br>
+        <span class="fw-bold">{{ house_record.first_hosting.count_days }} לילות | {{ house_record.first_hosting.persons_in_house }} <i class="bi bi-person-standing"></i> </span><br>
+        {% if not house_record.first_hosting.documents %}
+        <span class="fw-bold"><i class="bi bi-exclamation-circle-fill text-danger"></i> חסר מסמכים</span>
+        {% endif %}
+        {% endif %}
+    </div>
+    <div class="col-4" style="font-size: small;">
+        <div class="row">
+            <div class="col-6">
+                <div class="form-check form-switch">
+                    <input class="form-check-input clean" type="checkbox" role="switch" id="cleanSwitch{{ house_record.id }}" {% if house_record.report_details.clean %} checked {% endif %}>
+                    <label class="form-check-label" for="cleanSwitch{{ house_record.id }}">ניקוי</label>
+                </div>
+                {% if house_record.first_hosting %}
+                <div class="form-check form-switch">
+                    <input class="form-check-input clean_check_out" type="checkbox" role="switch" id="cleanCheckOutSwitch{{ house_record.id }}"
+                        {% if house_record.report_details.clean_check_out %} checked {% endif %}>
+                    <label class="form-check-label" for="cleanCheckOutSwitch{{ house_record.id }}">ניקוי צ'ק
+                        אאוט</label>
+                </div>
+                {% endif %}
+            </div>
+            <div class="col-6">
+                {% if house_record.first_hosting %}
+                <div class="form-check form-switch">
+                    <input class="form-check-input meal" type="checkbox" role="switch" id="mealSwitch{{ house_record.id }}" {% if house_record.report_details.meal %} checked {% endif %}>
+                    <label class="form-check-label" for="mealSwitch{{ house_record.id }}">ארוחה</label>
+                </div>
+                {% endif %}
+                <div class="form-check form-switch">
+                    <input class="form-check-input fault" type="checkbox" role="switch" id="faultSwitch{{ house_record.id }}" {% if house_record.report_details.fault %} checked {% endif %}>
+                    <label class="form-check-label" for="faultSwitch{{ house_record.id }}">תקלה בחדר</label>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <input style="font-size: small;" type="text" class="form-control form-control-sm note" placeholder="הערה חופשית.." id="note{{ house_record.id }}" 
+            value="{{ house_record.report_details.note }}">
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+
+<script>
+
+    $(document).ready(function () {
+
+    });
+
+</script>

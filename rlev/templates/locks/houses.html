@@ -1,0 +1,179 @@
+{% load custom_filters %}
+<div class="sticky-top p-3 bg-white border-bottom" style="z-index: 1000" id="houses_win">
+    <div class="">
+        <div class="row">
+            <div class="col-1">
+                <span class="fs-4 fw-bold ">דירות</span>
+            </div>
+            <div class="col-4 pr-2">
+                <br>
+                <input type="text" class="form-control" placeholder="חיפוש חופשי" id="search-input">
+            </div>
+            <div class="col-2 pr-2">
+                <label>הצג אירוחים עבור תאריך</label>
+                <input type="date" class="form-control" id="hostings-date">
+            </div>
+
+
+            <div class="col-5 fs-4 text-end">
+                
+                <span>
+                    <i class="bi bi-file-earmark-ruled cursor-pointer mx-2" data-toggle="tooltip" title="דוחות"
+                        id="houses_reports"></i>
+                </span>
+                {% if is_admin %}
+                <span>
+                    <i class="bi bi-people p-2 cursor-pointer mx-2" data-toggle="tooltip" title="הרשאות משתמשים"
+                        id="houses_users_permissions"></i>
+                    <i class="bi bi-plus-circle cursor-pointer mx-2" data-toggle="tooltip" title="הוסף דירה"
+                        id="add_house"></i>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+<div class="p-3">
+    <div class="row">
+        {% for house in houses %}
+        <div class="col-3 house-box" {% if not house.active %} style="opacity: 0.5" {% endif %}>
+            <div class="card m-2 custom-shadow house cursor-pointer rounded-4 overflow-hidden" data-house-id="{{ house.id }}">
+                <div class="row g-0">
+        
+                    <div class="col-5 bg-light d-flex flex-column justify-content-center text-center p-3">
+                        <div class="house-description fs-5 mb-3">{{ house.description }}</div>
+                        <div>
+                            {% if house.lock %}
+                                {{ house.lock.electric_quantity|battery_status }}
+                            {% endif %}
+                        </div>
+                    </div>
+        
+                    <div class="col-7 bg-body-secondary d-flex flex-column justify-content-center text-center p-3 hosting-details">
+                        {% if house.current_hostings %}
+                        {% for hosting in house.current_hostings %}
+                                <span 
+                                    class="badge {% if hosting.check_in %} bg-info text-black {% elif hosting.check_out %} bg-warning text-black {% else %} bg-primary {% endif %} mb-1"
+                                    data-bs-toggle="tooltip"
+                                    data-bs-html="true"
+                                    title="תאריך התחלה: {{ hosting.lodging_start_formater }}<br>תאריך סיום: {{ hosting.lodging_end_formater }}">
+                                    {{ hosting.guest_name }}
+                                </span>
+                        {% endfor %}
+                        
+                        {% else %}
+                            <span class="badge bg-success">פנוי</span>
+                        {% endif %}
+                    </div>
+        
+                </div>
+            </div>
+        </div>        
+        {% endfor %}
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+            $('[data-bs-toggle="tooltip"]').tooltip();
+            $('#hostings-date').change(load_hostings_by_date);
+
+            $("#add_house").click(function () {
+                loadContent('#md-modal-content', 'house');
+                $('#modal-md').modal('show');
+            });
+            $("#houses_users_permissions").click(function () {
+                loadContent('#md-modal-content', 'houses_users_permissions');
+                $('#modal-md').modal('show');
+            });
+
+            $("#houses_reports").click(function () {
+                loadContent('#xl-modal-content', 'houses_reports');
+                $('#modal-xl').modal('show');
+            });
+
+        });
+
+        $(".house").click(function () {
+            let house_id = $(this).data("house-id");
+            loadContent('#lg-modal-content', 'house/' + house_id);
+            $('#modal-lg').modal('show');
+        });
+
+        $('#search-input').on('input', function () {
+            filter_house();
+        });
+
+        function load_hostings_by_date(){
+            let selected_date = $('#hostings-date').val();
+            if (!selected_date) selected_date = 'day';
+            $.ajax({
+                url: 'get_hostings_houses_for_date/' + selected_date,
+                type: 'GET',
+                dataType: 'json',
+                success: function (data) {
+                    let houses = data.houses;
+                    $('.house').each(function () {
+                        let house = $(this);
+                        let house_id = house.data('house-id');
+                        
+                        let hostings_info = houses[house_id];
+                        if (hostings_info) {
+
+                            house.find('.hosting-details').empty(); 
+                            if (hostings_info.length > 0) {
+                                hostings_info.forEach(function (hosting) {
+                                let badge_class = hosting.check_in ? 'bg-info text-black' : (hosting.check_out ? 'bg-warning text-black' : 'bg-primary');
+
+                                // הטקסט שיופיע בתוך ה־tooltip
+                                let tooltipText = `תאריך התחלה: ${hosting.lodging_start_formater}<br>תאריך סיום: ${hosting.lodging_end_formater}`;
+
+                                // יצירת ה־badge
+                                let badge = `
+                                    <span 
+                                        class="badge ${badge_class} mb-1 me-1"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-html="true"
+                                        title="${tooltipText}">
+                                        ${hosting.guest_name}
+                                    </span>
+                                `;
+
+                                house.find('.hosting-details').append(badge);
+                            });
+
+                            $(function () {
+                                $('[data-bs-toggle="tooltip"]').tooltip();
+                            });
+
+                            } else {
+                                house.find('.hosting-details').append('<span class="badge bg-success">פנוי</span>');
+                            }
+                        } 
+                        
+                    });
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error loading hostings by date:", error);
+                }
+            });
+        }
+
+        function filter_house() {
+            let search_input = $('#search-input').val();
+
+            $('.house-box').each(function () {
+                let house = $(this);
+                let house_description = house.find('.house-description').text();
+
+                let search_matches = (house_description.includes(search_input));
+
+                if (search_matches) {
+                    house.show();
+                } else {
+                    house.hide();
+                }
+            });
+        }
+
+    </script>

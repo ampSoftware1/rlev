@@ -1,0 +1,188 @@
+{% load custom_filters %}
+<div class="modal-header">
+    {% if card_id %}
+    <h5 class="modal-title">עריכת כרטיס</h5>
+    {% else %}
+    <h5 class="modal-title">הוספת כרטיס</h5>
+    {% endif %}
+    <button type="button" class="btn-close btn-block" data-bs-dismiss="modal" aria-label="Close"></button>
+</div>
+
+<div class="modal-body">
+    <input type="text" hidden id="card_id" value="{{ card_id }}">
+    <input type="text" hidden id="card_person_id" value="{{ person_id}}">
+
+    <div class="form-group">
+        <label for="card_person_name" class="form-label">שם אורח</label>
+        <select class="form-select" id="card_person_name" value="{{ person_id }}">
+            <option value="0">בחר אורח</option>
+            {% for person in persons %}
+            <option value="{{ person.id }}" {% if person_id == person.id %} selected {% endif %}>{{ person.name }}
+            </option>
+            {% endfor %}
+        </select>
+    </div>
+
+
+    <div class="form-group">
+        <label for="card_name" class="form-label">שם כרטיס</label>
+        <input type="text" class="form-control" id="card_name" placeholder="שם כרטיס" value="{{ card_name }}">
+    </div>
+    <div class="form-group">
+        <label for="card_number" class="form-label">מספר כרטיס</label>
+        <input type="text" class="form-control" id="card_number" placeholder="מספר כרטיס" value="{{ card_number }}" {% if card_number %} disabled {% endif %}>
+    </div>
+    <div class="form-check form-switch {% if card_number %} d-none {% endif %}">
+        <input class="form-check-input" type="checkbox" role="switch" id="reverse_card" {% if not card_number %} checked {% endif %}>
+        <label class="form-check-label" for="type_card">פענח מספר</label>
+    </div>
+
+    <div class="form-group mt-4">
+        <label for="import_permission_from" class="form-label">ייבוא הרשאות מכרטיס אחר</label>
+        <select class="form-select" id="import_permission_from">
+            <option value="0">בחר כרטיס לייבוא הרשאות</option>
+            {% for card in persons_cards %}
+            <option value="{{ card.id }}">{{ card.name }} </option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<div class="modal-footer">
+    <button type="button" class="btn btn-primary" id="save_card_btn">שמור</button>
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+</div>
+
+
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+        $('#save_card_btn').click(save_card);
+        $('#card_person_name').change(function () {
+            $('#card_person_id').val($(this).val());
+        });
+
+        $('#card_number').focus();
+        $('#card_number').keypress(function (e) {
+            var key = e.which;
+            if (key == 13) {
+                save_card();
+            }
+        });
+
+    });
+
+
+    function save_card() {
+        let card_id = $("#card_id").val();
+        let person_id = $("#card_person_id").val();
+        let card_number = $("#card_number").val();
+        let card_name = $("#card_name").val();
+        let import_permission_from = $("#import_permission_from").val();
+        let person_name = $("#card_person_name")[0].selectedOptions[0].text;
+
+
+        let reverse_card;
+
+        if ($("#reverse_card").is(":checked")) {
+            reverse_card = 1;
+        }
+        else {
+            reverse_card = 0;
+        }
+
+
+        if (card_number.length == 0) {
+            alert_message("יש להזין מספר כרטיס", 'error');
+            return;
+        }
+
+        card_data = {
+            "person_id": person_id,
+            "card_number": card_number,
+            "card_name": card_name
+        }
+
+        data = {
+            "card_id": card_id,
+            "person_name": person_name,
+            "reverse_card": reverse_card,
+            "card_data": card_data,
+            "import_permission_from": import_permission_from
+        }
+
+        $.ajax({
+            url: "save_card",
+            type: "POST",
+            data: JSON.stringify(data),
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function (response) {
+                alert_message('הכרטיס נשמר בהצלחה', 'ok');
+                transmission(response.locks_to_sync)                
+               
+                if (card_id == '' && import_permission_from == 0) {
+                    console.log($('#person_table_cards').length)
+                    if ($('#person_table_cards').length) {
+                        add_permission_to_card(person_id, response.card_id)
+                    }
+                    if ($('#hosting_summary').length) {
+                        get_details_of_guest().done(function () {
+                            add_permissions_to_guest();
+                        });
+
+                    }
+                }
+                else {
+                    $('#modal-md').modal('hide');
+                }
+
+                if ($('#person_table_cards').length) {
+                    get_person_list_child('cards');
+                }
+                if ($('#person_modal').length) {
+                    check_view_permissions();
+                }
+                refresh_persons_windows();
+
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+                else {
+                    console.log(xhr)
+                    alert_message(xhr.responseJSON.error, 'error')
+                }
+            }
+        });
+    }
+
+    function add_permission_to_card(person_id, card_id) {
+        data = {
+            person_id: person_id,
+            by_object: 'person',
+            card_id: card_id
+        };
+        $.ajax({
+            url: 'add_permissions',
+            type: 'POST',
+            dataType: 'html',
+            data: JSON.stringify(data),
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function (data) {
+                $('#md-modal-content').html(data);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+</script>

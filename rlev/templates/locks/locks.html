@@ -1,0 +1,155 @@
+{% load custom_filters %}
+<div class="sticky-top p-3 bg-white border-bottom" style="z-index: 1000" id="locks_win">
+    <div class="">
+        <div class="row">
+            <div class="col-1">
+                <span class="fs-4 fw-bold ">מנעולים</span>
+            </div>
+            <div class="col-4 pr-2">
+                <input type="text" class="form-control" placeholder="חיפוש חופשי" id="search-input">
+            </div>
+            <div class="col-2">
+                <select class="form-select" id="filter_groups">
+                    <option class="text-secondary" value="all">בחר קבוצת גישה..</option>
+                    {% for group in groups %}
+                    <option>{{ group.description }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-2">
+
+            </div>
+
+            <div class="col-3 fs-4 text-end">
+                {% if is_admin %}
+                <span>
+                    <i class="bi bi-plus-circle cursor-pointer mx-2" data-toggle="tooltip" title="הוסף מנעול"
+                        id="add_lock_button"></i>
+                    <i class="bi bi-bookmarks cursor-pointer mx-2" data-toggle="tooltip" title="קבוצות גישה"
+                        id="access_group"></i>
+                    <i class="bi bi-people p-2 cursor-pointer mx-2" data-toggle="tooltip" title="הרשאות משתמשים"
+                        id="users_permissions"></i>
+                    <i class="bi bi-arrow-repeat cursor-pointer mx-2" id="sync_locks" data-toggle="tooltip"
+                        title="סנכרן"></i>
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+<div class="p-3">
+    <div class="row">
+        {% for lock in locks %}
+        <div class="col-3 lock-box">
+            <div class="card text-bg-light m-2 custom-shadow {% if lock.active %}lock cursor-pointer{% endif %}"
+                data-lock-id={{ lock.id }} {% if not lock.active %} style="opacity: 0.5" {% endif %}>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="badge text-bg-secondary">{{ lock.id }}</span>
+                    <span>
+                        <i class="bi bi-arrow-repeat cursor-pointer mx-1 sync-lock" data-toggle="tooltip"
+                            title="סנכרן"></i>
+                        <i class="bi bi-trash cursor-pointer mx-1 delete-lock" data-toggle="tooltip"
+                            title="הסר מנעול"></i>
+                    </span>
+                </div>
+                <div class="lock-alias card-body text-center py-4 fs-5">{{ lock.lock_alias }}</div>
+                <div class="group-list d-none">
+                    {% for group in lock.gorup_list %}
+                    {{group.name}},
+                    {% endfor %}
+                </div>
+                <div class="card-footer">
+                    {% if lock.has_gateway %}
+                    <i class="bi bi-wifi"></i>
+                    {% else %}
+                    <i class="bi bi-wifi-off"></i>
+                    {% endif %}
+                    {{ lock.electric_quantity|battery_status }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+
+
+            $("#access_group").click(function () {
+                loadContent('#md-modal-content', 'childs_locks/group');
+                $('#modal-md').modal('show');
+            });
+
+            $("#users_permissions").click(function () {
+                loadContent('#md-modal-content', 'childs_locks/user');
+                $('#modal-md').modal('show');
+            });
+
+            $("#add_lock_button").click(function () {
+                loadContent('#md-modal-content', 'add_lock');
+                $('#modal-md').modal('show');
+            });
+
+
+            $("#sync_locks").click(function () {
+                fetch('main_sync').then(response => {
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            window.location.href = '/login';
+                        }
+                    }
+                });
+            });
+
+            $(".sync-lock").click(function () {
+                event.stopPropagation();
+                let lock_id = $(this).parent().parent().parent().data("lock-id");
+                fetch('sync/' + lock_id);
+                alert_message("הסנכרון מתבצע כעת..", 'ok');
+            });
+
+            $(".delete-lock").click(function () {
+                event.stopPropagation();
+                let lock_id = $(this).parent().parent().parent().data("lock-id");
+                fetch('delete_lock/' + lock_id)
+                alert_message("המנעול נמחק מהמערכת", 'ok');
+            });
+
+            $(".lock").click(function () {
+                let lock_id = $(this).data("lock-id");
+                loadContent('#lg-modal-content', 'lock/' + lock_id);
+                $('#modal-lg').modal('show');
+            });
+
+            $('#search-input').on('input', function () {
+                filter_locks();
+            });
+
+            $("#filter_groups").change(filter_locks);
+
+
+        });
+
+
+        function filter_locks() {
+            let group = $("#filter_groups").val();
+            let search_input = $('#search-input').val();
+
+            $('.lock-box').each(function () {
+                let lock = $(this);
+                let lock_alias = lock.find('.lock-alias').text();
+                let lock_groups = lock.find('.group-list').text();
+
+                let group_matches = (group === 'all' || lock_groups.includes(group));
+                let search_matches = (lock_alias.includes(search_input));
+
+                if (group_matches && search_matches) {
+                    lock.show();
+                } else {
+                    lock.hide();
+                }
+            });
+        }
+
+    </script>

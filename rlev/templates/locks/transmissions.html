@@ -1,0 +1,127 @@
+{% load custom_filters %}
+<div class="sticky-top p-3  bg-white border-bottom d-flex justify-content-between align-items-center"
+    style="z-index: 1000; height: 10vh">
+
+
+    <div>
+        <span class="fs-4 fw-bold ">שידורי הרשאות</span>
+    </div>
+    <div class="fs-4">
+        <span title="שידור חוזר לכל ההרשאות" class="mx-1 resend-all-transmission cursor-pointer"
+            data-toggle="tooltip"><i class="bi bi-arrow-clockwise cursor-pointer"></i></span>
+    </div>
+
+</div>
+<div class="p-3 bg-white" style="font-size: 12px">
+    <table id="transmission_table" class="table table-sm table-hover table-striped table-bordered">
+        <thead class="bg-white position-sticky" style="top: 10vh">
+            <tr class="cursor-pointer">
+                <th class="col-1">סוג פעולה</th>
+                <th class="col-1">שם מנעול</th>
+                <th class="col-1">מספר כרטיס</th>
+                <th class="col-2">פרטי כרטיס</th>
+                <th class="col-1">תאריך יצירה</th>
+                <th class="col-1">נוצר על ידי</th>
+                <th class="col-1">סטטוס</th>
+                <th class="col-1">כמות נסיונות</th>
+                <th class="col-1">שידור אחרון</th>
+                <th class="col-1"></th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        load_transmission_data();
+        $(".resend-all-transmission").click(async function () {
+            await fetch('resend_all_transmissions');
+            fetch('transmission_all')
+        });
+
+    });
+
+    function load_transmission_data() {
+        $.ajax({
+            url: 'get_transmissions_list',
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                let transmissions = data.transmissions;
+                let table_data = $("<tbody>");
+                transmissions.forEach(transmission => {
+                    let tr = $("<tr>")
+                    if (transmission.type_action == 1) {
+                        tr.append("<td class='text-success row-transmission'>הוספת הרשאה</td>");
+                    }
+                    else {
+                        tr.append("<td class='text-danger'>מחיקת הרשאה</td>");
+                    }
+
+                    tr.append("<td>" + transmission.lock_name + "</td>");
+                    tr.append("<td>" + transmission.card_number + "</td>");
+                    tr.append("<td>" + transmission.card_description + "</td>");
+                    tr.append("<td>" + transmission.date_create + "</td>");
+                    tr.append("<td>" + transmission.user_transmission + "</td>");
+                    switch (transmission.status_transmission) {
+                        case 0:
+                            tr.append("<td><span class='badge rounded bg-secondary'> ממתין לשידור</span></td>");
+                            break;
+                        case 1:
+                            tr.append("<td><span class='badge rounded bg-warning'> משדר כעת..</span></td>");
+                            break;
+                        case 2:
+                            tr.append("<td><span class='badge rounded bg-success'> שודר בהצלחה</span></td>");
+                            break;
+                        case 3:
+                            tr.append("<td><span class='badge rounded bg-info'>ממתין לשידור חוזר</span></td>");
+                            break;
+                        case 4:
+                            tr.append("<td><span class='badge rounded bg-danger'>נכשל</span></td>");
+                            break;
+                    }
+
+                    tr.append("<td>" + transmission.amount_attempts + "</td>");
+                    if (transmission.last_transmission == null) {
+                        tr.append("<td>-</td>");
+                    } else {
+                        tr.append("<td>" + transmission.last_transmission + "</td>");
+                    }
+                    let actions = $("<td>");
+                    if (transmission.status_transmission != 2) {
+                        actions.append("<span class='mx-1 resend-transmission cursor-pointer' data-id='" + transmission.id + "' title='שידור חוזר' data-toggle='tooltip'><i class= 'bi bi-arrow-clockwise'></i></span>");
+                        actions.append("<span class='mx-1 delete-transmission cursor-pointer' data-id='" + transmission.id + "' title='בטל פעולה' data-toggle='tooltip'><i class= 'bi bi-x-circle'></i></span>")
+                    }
+                    tr.append(actions);
+                    table_data.append(tr);
+                });
+                $("#transmission_table tbody").html(table_data.html());
+                $('[data-toggle="tooltip"]').tooltip();
+                $(".resend-transmission").click(function () {
+                    let id = $(this).data("id");
+                    fetch('resend_transmission/' + id);
+                });
+                $(".delete-transmission").click(function () {
+                    let id = $(this).data("id");
+                    fetch('delete_transmission/' + id);
+                });
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+
+
+    }
+
+
+
+
+
+</script>

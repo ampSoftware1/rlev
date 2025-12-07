@@ -1,0 +1,82 @@
+<div class="modal-header">
+    <h5 class="modal-title">הוספת מנעול</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <div class="form-group row">
+        <div class="p-2">
+            <label for="lock_id">
+                <i class="bi bi-lock"></i> מזהה מנעול
+            </label>
+            <input type="text" class="form-control" id="lock_id_ttl" style="text-align: right">
+            <span id="lock_name"></span>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" disabled id="add_lock" class="btn btn-primary">הוסף מנעול</button>
+</div>
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    $(document).ready(function () {
+        $('#add_lock').click(add_lock);
+        $('#lock_id_ttl').on('input', check_lock);
+    });
+
+    function check_lock() {
+        let lock_id_ttl = $('#lock_id_ttl').val();
+        if (lock_id_ttl.length >= 7) {
+            $('#lock_name').html('...');
+            $.ajax({
+                url: 'check_lock/' + lock_id_ttl,
+                type: 'GET',
+                success: function (data) {
+
+                    if (data.success == true) {
+                        $('#lock_name').html("<i class='bi bi-check-circle'></i> " + data.lock_name);
+                        $('#add_lock').prop('disabled', false);
+                    } else {
+                        $('#lock_name').html("<span class='text-danger'><i class='bi bi-x-circle'></i> " + data.error + "</span>");
+                        $('#add_lock').prop('disabled', true);
+                    }
+                },
+                error: function (data) {
+                    if (xhr.status === 401) {
+                        window.location.href = '/login';
+                    }
+                    else {
+                        $('#lock_name').html("<span class='text-danger'><i class='bi bi-x-circle'></i> ארעה שגיאה בבדיקת המנעול, אנא נסה שוב</span>");
+                        $('#add_lock').prop('disabled', true);
+                    }
+                }
+            });
+        } else {
+            $('#lock_name').html('');
+            $('#add_lock').prop('disabled', true);
+        }
+    }
+
+    function add_lock() {
+        let lock_id_ttl = $('#lock_id_ttl').val();
+
+        $.ajax({
+            url: 'save_lock/' + lock_id_ttl,
+            type: 'GET',
+            success: function (data) {
+                alert_message('המנעול נוסף בהצלחה', 'ok');
+                let lock_id = data.lock_id
+                fetch('sync/' + lock_id);
+                loadContent('#content', 'locks', false);
+                $('#modal-md').modal('hide');
+            },
+            error: function (data) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+                else {
+                    alert_message(data.message, 'error');
+                }
+            }
+        });
+    }
+</script>

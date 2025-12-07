@@ -1,0 +1,57 @@
+# Python
+*.py[cod]
+*$py.class
+*.so
+.Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+media/files/
+media/id_number_files/
+/static/
+*.pot
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.local
+
+# Node modules (if using)
+node_modules/
+package-lock.json
+
+# Migrations (optional - remove if you want to track them)
+# */migrations/*
+# !*/migrations/__init__.py
+
+# Sensitive files
+*.key
+*.pem
+accessToken
+
+# Backup files
+*.bak
+*.backup

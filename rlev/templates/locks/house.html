@@ -1,0 +1,659 @@
+{% load custom_filters %}
+<div class="m-1 p-3">
+    <div class="d-flex justify-content-between align-items-center">
+        {% if type_view == 'edit' %}
+        <h5 class="modal-title">פרטי דירה</h5>
+        {% else %}
+        <h5 class="modal-title">הוספת דירה חדשה</h5>
+        {% endif %}
+
+        <div class="d-flex align-items-center gap-2">
+            <input type="text" hidden id="house_id" value="{{ details.id }}">
+            {% if type_view == 'edit' %}
+            <div class="form-check form-switch mx-3">
+                <label class="form-check-label" id="lable_switch_active_house" for="switch_active_house">{% if details.active %}פעילה{% else %}לא פעילה{% endif %}</label>
+                <input class="form-check-input" type="checkbox" role="switch" id="switch_active_house" {% if details.active %} checked {% endif %}>
+            </div>
+            <span class="fs-4">
+                <i class="bi bi-copy text-secondary mx-1 cursor-pointer" data-toggle="tooltip" title="העתק לינק תורם"
+                    id="copy_link"></i>
+            </span>
+            <input type="hidden" id="link_house"
+                value="https://childrens-house.r-lev.com/house-page/{{ details.link_code }}">
+            <span class="fs-4">
+                <i class="bi bi-trash text-secondary mx-1 cursor-pointer" data-toggle="tooltip" title="מחק דירה"
+                    id="delete_house"></i>
+            </span>
+            {% endif %}
+            <button type="button" class="btn-close btn-block" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
+
+
+<div class="modal-body">
+    <div class="row">
+        <div class="col-6">
+            <label for="description">שם דירה</label>
+            <input type="text" class="form-control" id="description" placeholder="שם דירה"
+                value="{{ details.description }}">
+
+            <div class="row">
+                <div class="col-6">
+                    <label for="page_description">פתיח תיאור לדף תורם</label>
+                    <input type="text" class="form-control" id="page_description1"
+                        value="{{ details.page_description1 }}">
+                </div>
+                <div class="col-6">
+                    <label for="page_description">תיאור לדף תורם</label>
+                    <input type="text" class="form-control" id="page_description2"
+                        value="{{ details.page_description2 }}">
+                </div>
+            </div>
+
+
+            <label for="house_lock">מנעול ראשי</label>
+            <select class="form-select" id="house_lock" value="{{ details.lock_id}}">
+                <option value="">בחר מנעול</option>
+                {% for lock in locks %}
+                <option value="{{ lock.id }}" {% if lock.id == details.lock_id %} selected {% endif %}>{{ lock.alias }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if type_view == 'edit' and is_admin %}
+        <div id="HouseLinksContainer" class="col-6">
+            <!-- <div class="m-2">
+
+
+                <div class="d-flex justify-content-between" id="groupHeader">
+                    <h5>מנעולים משוייכים</h5>
+                    <div><span class="badge rounded-pill bg-primary" id="add_locks_to_house" style="cursor: pointer;"><i
+                                class="bi bi-plus-circle"></i> הוסף מנעול</span></div>
+                </div>
+                <div class="d-flex border rounded m-1 p-1 flex-wrap justify-content-start align-items-start"
+                    id="locksContainer" style="max-width: 100%; height: 10vh; overflow: auto;"></div>
+
+                
+            </div> -->
+        </div>
+        {% endif %}
+    </div>
+    {% if type_view == 'edit' %}
+
+    <ul class="nav nav-tabs mt-2">
+        <li class="nav-item">
+            <a class="nav-link nav-link-tabs active house-child-tab cursor-pointer" data-child-name="hostings"
+                data-toggle="tab">אירוחים</a>
+        </li>
+
+    </ul>
+    <div class="tab-content d-flex justify-content-center align-items-center" id="child_content" style="height: 30vh;
+                overflow-y: auto"></div>
+    {% endif %}
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            {% if type_view == 'edit' %}
+            <button class="btn btn-outline-secondary btn-sm mt-2" id="add_child_btn" data-child-name="hostings">
+                <i class="bi bi-plus-circle"></i>
+                <span id="add_child_btn_text"><i class="bi bi-plus-circle"></i> הוסף אירוח</span>
+            </button>
+            {% endif %}
+        </div>
+        <div>
+            <button type="button" class="btn btn-primary" id="save_house_btn">שמור</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+        </div>
+    </div>
+</div>
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    var ascending = true;
+    $(document).ready(function () {
+
+        get_house_list_child('hostings');
+        // get_house_locks();
+        get_links_area();
+        $('[data-toggle="tooltip"]').tooltip();
+        // $("#add_locks_to_house").click(add_locks_to_house);
+        // $("#add_user_to_house").click(add_user_to_house);
+        $('#delete_house').click(delete_house);
+        $("#save_house_btn").click(save_house);
+
+
+        $('.house-child-tab').click(function () {
+            let child_name = $(this).data('child-name');
+            get_house_list_child(child_name);
+            $('.nav-link-tabs').removeClass('active');
+            $(this).addClass('active');
+
+            $(".card-list").removeClass('actice show');
+            $("#" + child_name).addClass('active show')
+        });
+
+
+        $('#add_child_btn').click(function () {
+            let child_name = $(this).data('child-name');
+            add_child(child_name);
+
+        });
+
+        $("#copy_link").click(function () {
+            let link_house = $('#link_house').val();
+            navigator.clipboard.writeText(link_house)
+        });
+        $("#switch_active_house").change(switch_active_house);
+    });
+
+    async function delete_child_item() {
+        let child_id = $(this).data('id');
+        let child_name = $(this).data('child-name');
+        try {
+            let house_id = $("#house_id").val();
+
+            let child_type = {
+                "hostings": "אירוח",
+            }
+
+            await confirmation_modal('האם הנך בטוח שברצונך למחוק את ה' + child_type[child_name] + '?');
+
+            $.ajax({
+                url: "delete_house_child/" + child_name + "/" + child_id,
+                type: "GET",
+                success: function () {
+                    switch (child_name) {
+                        case 'hostings':
+                            alert_message("האירוח נמחק בהצלחה", 'ok');
+                            get_house_list_child(child_name);
+                    }
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    if (xhr.status == 401) {
+                        window.location.href = '/login';
+                    }
+                }
+            });
+        } catch (error) {
+        }
+    }
+
+    function get_house_list_child(child_name, set_empty = true) {
+        let house_id = $("#house_id").val();
+        if (house_id.length == 0) return;
+
+        let child_list_div = $('#child_content');
+        if (set_empty) child_list_div.empty();
+
+        let childs_type = {
+            hostings: {
+                item: 'אירוח',
+                items: 'אירוחים',
+                fields: [
+                    { "name": 'lodging_start_formater', "description": 'תאריך התחלה' },
+                    { "name": 'lodging_end_formater', "description": 'תאריך סיום' },
+                    { "name": 'guest_name', "description": 'שם אורח' },
+                    { "name": 'patient_name', "description": 'שם מטופל' },
+                    { "name": 'hospital_ward', "description": 'מחלקה' },
+                    { "name": "actions", "description": "" }
+                ],
+                symbol_fill: '<i class="bi bi-suitcase2-fill"></i>',
+                function_on_click: edit_hosting
+            }
+        };
+
+
+        let item = childs_type[child_name].item
+
+        $('#add_child_btn_text').html('הוסף ' + item);
+        $('#add_child_btn').data('child-name', child_name);
+        $('#add_child_btn').removeClass('d-none');
+
+        $.ajax({
+            url: "get_house_child_list/" + child_name + "/" + house_id,
+            type: "GET",
+            success: function (data) {
+                if (set_empty == false) {
+                    if ($('#house_table_' + child_name).length == 0) return;
+                }
+                let child_list = data.child_list;
+                if (child_list.length > 0) {
+                    child_list_div.removeClass('d-flex justify-content-center align-items-center');
+                    let table = $('<table>').addClass('table table-striped table-hover small table-sm table-clickble table-fixed').css({ 'cursor': 'pointer' }).attr('id', 'house_table_' + child_name);
+                    let thead = $('<thead>').addClass('sticky-top bg-light').append($('<tr>'));
+                    for (let i = 0; i < childs_type[child_name].fields.length; i++) {
+                        let th = $('<th data-column-name="' + childs_type[child_name].fields[i]['name'] + '">')
+                            .text(childs_type[child_name].fields[i]['description'])
+                            .click(sort_table);
+                        thead.append(th);
+                    }
+                    table.append(thead);
+
+                    let tbody = $('<tbody>');
+                    let child_list = data.child_list;
+                    for (let d = 0; d < child_list.length; d++) {
+                        let tr = $('<tr>');
+                        for (let f = 0; f < childs_type[child_name].fields.length; f++) {
+                            let txt = '';
+                            let td = $('<td>');
+                            let function_on_click;
+                            field_name = childs_type[child_name].fields[f]['name'];
+
+                            value = child_list[d][childs_type[child_name].fields[f]['name']];
+                            switch (field_name) {
+                                case 'actions':
+                                    txt = '<span class="cursor-pointer"><i class="bi bi-clipboard"></i></span>';
+                                    function_on_click = doplicate_hosting;
+                                    break;
+                                default:
+                                    txt = value;
+                                    function_on_click = childs_type[child_name]['function_on_click'];
+                                    break;
+                            }
+
+                            td.html(txt)
+                                .click(function_on_click)
+                                .attr('data-id', child_list[d]['id'])
+                                .attr('data-child-name', child_name)
+                                .attr('data-column-name', field_name);
+                            tr.append(td)
+                        }
+                        tbody.append(tr);
+                    }
+                    table.append(tbody);
+                    child_list_div.html(table);
+                }
+                else {
+                    child_list_div.addClass('d-flex justify-content-center align-items-center');
+                    child_list_div.html('<div class="text-center" id="house_table_' + child_name + '">' + childs_type[child_name]['symbol_fill'] + ' אין ' + childs_type[child_name]['items'] + ' להצגה</div>');
+                }
+
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status == 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function doplicate_hosting() {
+        let hosting_id = $(this).data('id');
+        loadContent('#hosting_modal_content', 'doplicate_hosting/' + hosting_id, false, function () {
+            $("#hosting_modal").addClass('modal-md').removeClass('modal-xl').modal('show');
+            check_hosting_record();
+            set_guest_name_title();
+            replace_window(null, 'hosting_details')
+        });
+
+    }
+
+    async function add_locks_to_house() {
+        let selected_locks = await select_locks();
+        let locks_ids = selected_locks.locks_ids;
+
+        if (locks_ids.length == 0) {
+            return;
+        }
+        let house_id = $("#house_id").val();
+
+        $.ajax({
+            url: 'add_locks_to_house/' + house_id,
+            type: "POST",
+            contentType: 'application/json',
+            data: JSON.stringify(locks_ids),
+            beforeSend: function (xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", csrfToken);
+            },
+            success: function () {
+                get_house_link_list('lock');
+            }
+        })
+    }
+
+
+
+    // function get_house_locks() {
+    //     let house_id = $("#house_id").val();
+    //     if (house_id.length == 0) return;
+    //     $.ajax({
+    //         url: "get_locks_house_list/" + house_id,
+    //         type: "GET",
+    //         success: function (data) {
+    //             locks_house = data.locks_house;
+
+    //             $('#locksContainer').empty();
+    //             for (let i = 0; i < locks_house.length; i++) {
+    //                 let lockItem = $('<div>').addClass('d-flex justify-content-between align-items-center bg-secondary rounded m-1').css(
+    //                     'width', 'fit-content'
+    //                 );
+    //                 let span = $('<span>').addClass('text-white fw-bold mx-1').css('font-size', 'small').text(locks_house[i].name);
+    //                 let btn = $('<button>').addClass('btn btn-secondary rounded-end p-0 px-1 lock_link_btn').css('font-size', 'small').text('x').attr('data-lock-house-id', locks_house[i].id).click(remove_lock_from_house);
+    //                 $(lockItem).append(span);
+    //                 $(lockItem).append(btn);
+    //                 $('#locksContainer').append(lockItem)
+    //             }
+    //         },
+    //         error: function (xhr, textStatus, errorThrown) {
+    //             if (xhr.status  == 401) {
+    //                 window.location.href = '/login';
+    //             }
+    //         }
+    //     });
+    // }
+
+
+
+
+    function get_links_area() {
+        let links_type = [{
+            type: 'lock',
+            title: 'מנעולים משוייכים',
+            item: 'מנעול',
+        }, {
+            type: 'user',
+            title: 'משתמשים מורשים',
+            item: 'משתמש',
+        }];
+
+        for (let i = 0; i < links_type.length; i++) {
+            let type_link = links_type[i].type;
+
+            let divHeader = $('<div>').addClass("d-flex justify-content-between").attr('id', type_link + 'Header');
+            $(divHeader).append(
+                $('<h5>').text(links_type[i].title),
+                $('<div>').append(
+                    $('<span>').addClass('badge rounded-pill bg-primary').html('<i class="bi bi-plus-circle"></i> הוסף ' + links_type[i].item).attr('id', 'add' + type_link + 'Btn').attr('data-type-link', type_link).click(check_add_link_to_house).css({ 'cursor': 'pointer' }),
+                )
+            );
+
+            let divBody = $('<div>').addClass("d-flex border rounded m-1 p-1 flex-wrap justify-content-start align-items-start").attr('data-type-link', type_link).attr('id', type_link + 'Container').css({ 'max-width': '100%', 'height': '10vh', 'overflow-y': 'auto', 'overflow-x': 'auto' });
+
+            let Container = $('<div>').addClass("m-2");
+            $(Container).append(divHeader);
+            $(Container).append(divBody);
+            $('#HouseLinksContainer').append(Container);
+
+            get_house_link_list(type_link);
+        }
+    }
+
+    function get_house_link_list(type_link) {
+        let house_id = $("#house_id").val();
+
+        $.ajax({
+            url: "get_house_link_list/" + type_link + '/' + house_id,
+            type: "GET",
+            success: function (data) {
+                link_list = data.link_list;
+
+                $('#' + type_link + 'Container').empty();
+                for (let i = 0; i < link_list.length; i++) {
+                    let linkItem = $('<div>').addClass('d-flex justify-content-between align-items-center bg-secondary rounded m-1').css(
+                        'width', 'fit-content'
+                    );
+                    let span = $('<span>').addClass('text-white fw-bold mx-1').css('font-size', 'small').text(link_list[i].name);
+                    let btn = $('<button>').addClass('btn btn-secondary rounded-end p-0 px-1 house_link_btn').css('font-size', 'small').text('x').attr('data-id', link_list[i].id).click(remove_link_from_house);
+                    $(linkItem).append(span);
+                    $(linkItem).append(btn);
+                    $('#' + type_link + 'Container').append(linkItem)
+                }
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+
+    function get_house_links_options() {
+        let house_id = $("#house_id").val();
+        let type_link = 'user';
+        let btn = $('#add' + type_link + 'Btn');
+        let btn_position = btn.position();
+        let btn_position_height = btn.outerHeight();
+
+        $('#selectItem' + type_link).remove();
+        $.ajax({
+            url: "get_house_link_options/" + type_link + '/' + house_id,
+            type: "GET",
+            success: function (data) {
+                link_options = data.link_options;
+
+                let SelectInput = $('<select>').addClass('form-select border border-primary rounded')
+                    .attr('id', 'selectItem' + type_link).attr('data-type-link', type_link)
+                    .attr('multiple', 'multiple')
+                    .css({ 'width': '25vh', 'position': 'absolute', 'left': btn_position.left + 'px', 'top': btn_position.top + btn_position_height + 'px' })
+                    .on('change', add_link_to_house)
+                    .on('blur', function () {
+                        $(this).remove();
+                    });
+
+                for (let i = 0; i < link_options.length; i++) {
+                    let option = $('<option>').attr('value', link_options[i].id).text(link_options[i].name);
+                    SelectInput.append(option);
+                }
+
+                $('#' + type_link + 'Header').append(SelectInput);
+                SelectInput.focus();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+
+        });
+    }
+
+    function add_link_to_house() {
+        let house_id = $("#house_id").val();
+        let link_id = $(this).val();
+        let type_link = 'user';
+
+        $.ajax({
+            url: "add_link_to_house/" + type_link + '/' + house_id + '/' + link_id,
+            type: "GET",
+            success: function (data) {
+                get_house_link_list(type_link);
+                $('#selectItem' + type_link).remove();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+
+    }
+
+    function remove_link_from_house() {
+        let link_object = $(this).parent();
+        let type_link = link_object.parent().data('type-link');
+        let object_id = $(this).data('id');
+
+        $.ajax({
+            url: "remove_link_from_house/" + type_link + "/" + object_id,
+            type: "GET",
+            success: function (data) {
+                get_house_link_list(type_link);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+
+
+    function check_add_link_to_house() {
+        let type_link = $(this).data('type-link');
+        if (type_link == 'lock') add_locks_to_house();
+        else get_house_links_options();
+    }
+
+
+    async function delete_house() {
+        let house_id = $("#house_id").val();
+        try {
+            await confirmation_modal('האם הנך בטוח שברצונך למחוק את הדירה?');
+
+            $.ajax({
+                url: "delete_house/" + house_id,
+                type: "GET",
+                success: function (response) {
+                    if (response.success) {
+                        alert_message("הדירה נמחקה בהצלחה", "ok");
+                        $('#modal-lg').modal('hide');
+                        refresh_houses_windows();
+
+                    }
+                    else {
+                        alert_message(response.error, "error");
+                    }
+                },
+                error: function () {
+                    if (xhr.status == 401) {
+                        window.location.href = '/login';
+                    }
+                    else {
+                        alert_message("ארעה שגיאה במחיקת הדירה", "error");
+                    }
+                }
+            });
+        } catch (error) {
+        }
+    }
+
+
+    function save_house() {
+        let house_id = $("#house_id").val();
+        let description = $("#description").val();
+        let page_description1 = $("#page_description1").val();
+        let page_description2 = $("#page_description2").val();
+        let house_lock = $("#house_lock").val();
+
+
+        data = {
+            "house_id": house_id,
+            "description": description,
+            "page_description1": page_description1,
+            "page_description2": page_description2,
+            "lock_id": house_lock,
+            "active": $("#switch_active_house").is(":checked")
+        }
+
+        $.ajax({
+            url: "save_house",
+            type: "POST",
+            data: JSON.stringify(data),
+            dataType: 'json',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function (data) {
+                if (house_id.length) {
+                    alert_message('השינויים נשמרו בהצלחה', 'ok');
+                    $('#modal-lg').modal('hide');
+                }
+                else {
+                    alert_message('הדירה נוספה בהצלחה', 'ok');
+                    $('#modal-md').modal('hide');
+                    let house_id = data.house_id;
+
+                    loadContent('#lg-modal-content', 'house/' + house_id);
+                    $('#modal-lg').modal('show');
+                }
+                refresh_houses_windows();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status == 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function edit_hosting() {
+        let hosting_id = $(this).data("id");
+        loadContent('#hosting_modal_content', 'hosting/' + hosting_id);
+        $('#hosting_modal').modal('show');
+    }
+
+    function remove_lock_from_house() {
+
+        let lock_house_id = $(this).data('lock-house-id');
+
+        $.ajax({
+            url: "remove_lock_from_house/" + lock_house_id,
+            type: "GET",
+            success: function (data) {
+                get_house_locks();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status == 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+
+    function switch_active_house() {
+        let current_status = $(this).is(':checked');
+        let active_val = current_status ? 1 : 0;
+
+
+        if (active_val) $("#lable_switch_active_house").text('פעילה');
+        else $("#lable_switch_active_house").text('לא פעילה');
+
+    }
+
+    function add_child(child_name) {
+        let house_id = $("#house_id").val();
+        if (child_name == 'permissions') {
+            data = {
+                house_id: house_id,
+                by_object: 'house',
+            };
+            $.ajax({
+                url: 'add_permissions',
+                type: 'POST',
+                dataType: 'html',
+                data: JSON.stringify(data),
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                success: function (data) {
+                    $('#md-modal-content').html(data);
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    if (xhr.status == 401) {
+                        window.location.href = '/login';
+                    }
+                }
+            });
+            $('#modal-md').modal('show');
+        }
+        if (child_name == 'phones') {
+            loadContent('#md-modal-content', 'phone');
+            $('#modal-md').modal('show');
+        }
+        if (child_name == 'hostings') {
+            loadContent('#hosting_modal_content', 'hosting', false, function () {
+                $("#house_id_hosting").val($("#house_id").val());
+                $('#hosting_modal').modal('show');
+            });
+
+        }
+    }
+
+
+
+
+</script>

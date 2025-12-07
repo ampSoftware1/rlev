@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css">
+    <title>כניסה</title>
+</head>
+
+<body class="bg-body-tertiary d-flex align-items-start justify-content-center vh-100">
+
+    <main class="form-signin" style="width: 50vh; margin-top: 100px">
+        <form class="text-right" method="post">
+            {% csrf_token %}
+            <div class="text-center">
+                {% block logo %}{% endblock %}
+            </div>
+            <h1 class="h3 fw-normal text-center">{% block project_name %}{% endblock %}</h1>
+
+            <div class="form-floating m-3">
+                <input type="text" class="form-control text-right" id="username" name="username" placeholder="שם משתמש">
+                <label for="username">שם משתמש</label>
+            </div>
+            <div class="form-floating m-3">
+                <input type="password" class="form-control" id="password" name="password" placeholder="סיסמה">
+                <label for="password">סיסמה</label>
+            </div>
+            <div class="form-floating m-3">
+                <button class="btn btn-primary w-100 py-2" type="submit">הכנס</button>
+            </div>
+        </form>
+        {% if status == 'error' %}
+      
+        <div class="alert alert-danger text-center">
+            שם משתמש או סיסמה שגויים או שאין הרשאת גישה
+        </div>
+     
+        {% endif %}
+
+
+    </main>
+</body>
+
+</html>

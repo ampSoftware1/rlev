@@ -1,0 +1,167 @@
+{% load custom_filters %}
+<div class="sticky-top p-3 bg-white border-bottom" style="z-index: 1000" id="persons_win">
+    <div class="">
+        <div class="row">
+            <div class="col-3">
+                <span class="fs-4 fw-bold ">אירוחים - איכילוב</span>
+            </div>
+            <div class="col-3 pr-2">
+                <span>חיפוש חופשי</span>
+                <input type="text" class="form-control" placeholder="חפש..." id="search_input_hostings_ichilov">
+            </div>
+            <div class="col-2">
+                <span> מיון לפי</span>
+                <select class="form-select" id="sort_by" style="width: 150px;">
+                    <option value="name">שם</option>
+                    <option value="date_add">תאריך הוספה</option>
+                    <option value="lodging_start">תאריך התחלת לינה</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="hostings_ichilov_container" class="p-3">
+    <table id="hostings_ichilov_table" class="table table-striped">
+        <thead>
+            <th style="width: 15%">
+                מספר זהות
+            </th>
+            <th data-column="name" style="width: 15%">
+                שם
+            </th>
+            <th data-column="hospital_ward" style="width: 15%">
+                מחלקה
+            </th>
+            <th data-column="lodging_start" style="width: 15%">
+                תאריך התחלת לינה
+            </th>
+            <th data-column="lodging_end" style="width: 15%">
+                תאריך סיום לינה
+            </th>
+
+            <th style="width: 10%">
+
+            </th>
+        </thead>
+        <tbody>
+            {% for hosting in hostings %}
+            <tr class="cursor-pointer hosting_icilov" data-id="{{ hosting.id }}"
+                data-person-id="{{ hosting.person_details.id }}">
+                <td style="width: 15%">
+                    {{ hosting.person_details.id_number }}
+                </td>
+                <td style="width: 15%">
+                    {{ hosting.person_details.name }}
+                </td>
+                <td style="width: 15%">
+                    {{ hosting.hospital_ward }}
+                </td>
+                <td style="width: 15%">
+                    {{ hosting.lodging_start }}
+                </td>
+                <td style="width: 15%">
+                    {{ hosting.lodging_end }}
+                </td>
+                <td style="width: 10%">
+                    {% if allow_feedback %}
+                    <button
+                        class="btn {% if hosting.send_feedback %} btn-secondary {% else %} btn-success {% endif %}  btn-sm send_feedback"
+                        data-id="{{ hosting.id }}"><i class="bi bi-send"></i> שלח משוב</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    var csrfToken = "{{ csrf_token }}";
+
+
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+
+        $(".hosting_icilov").click(function () {
+            var person_id = $(this).data("person-id");
+            loadContent('#lg-modal-content', 'person/' + person_id);
+            $('#modal-lg').modal('show');
+        });
+
+        $('#search_input_hostings_ichilov').on('input', function () {
+            var value = $(this).val();
+            $('#hostings_ichilov_table tbody tr').filter(function () {
+                $(this).toggle($(this).text().indexOf(value) > -1)
+            });
+        });
+
+        $('#sort_by').change(sort_persons);
+
+        $('.send_feedback').click(async function (event) {
+            event.stopPropagation();
+            let hosting_id = $(this).data('id');
+            let btn = $(this);
+            if (btn.hasClass('btn-secondary')) {
+                await confirmation_modal('כבר נשלח משוב לאורח, האם לשלוח שוב?');
+            }
+
+            $.ajax({
+                url: "send_feedback/icilov/" + hosting_id,
+                type: "GET",
+                dataType: 'json',
+                success: function (response) {
+                    if (response.success) {
+                        btn.removeClass('btn-success').addClass('btn-secondary');
+                        alert_message('טופס משוב נשלח בהצלחה', 'ok');
+                    }
+                    else {
+                        alert_message(response.error, 'error');
+                    }
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    if (xhr.status === 401) {
+                        window.location.href = '/login';
+                    }
+                }
+            })
+
+        })
+    });
+
+
+    function sort_persons() {
+        var selectedField = $(this).val();
+        var columnIndex = null;
+
+        $('#hostings_ichilov_container thead th').each(function (index) {
+            if ($(this).data('column') === selectedField) {
+                columnIndex = index;
+                return false;
+            }
+        });
+
+        var table = $('#hostings_ichilov_container tbody');
+
+        var rows = table.find('tr').toArray().sort(function (a, b) {
+            var tdA = $(a).children('td').eq(columnIndex).text();
+            var tdB = $(b).children('td').eq(columnIndex).text();
+
+            if (selectedField == 'name') {
+                return tdA.localeCompare(tdB);
+            } else {
+                return new Date(tdB) - new Date(tdA);
+            }
+        });
+
+        $.each(rows, function (index, row) {
+            table.append(row);
+        });
+
+
+    }
+
+
+
+
+</script>

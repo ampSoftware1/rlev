@@ -1,0 +1,33 @@
+{% for hosting in list %}
+
+<tr id="hosting_{{ hosting.id }}" class="cursor-pointer" data-id="{{ hosting.id }}" style="font-size: 12px">
+    <td style="width: 12%;" data-column="house__description">{{ hosting.house_description }}</td>
+    <td style="width: 12%;" data-column="hostings_as_guest__last_name">{{ hosting.guest_name }}</td>
+    <td style="width: 6%;" >{{ hosting.guest.city }}</td>
+    <td style="width: 8%;" data-column="guest_is_patient">{{ hosting.status_guest }}</td>
+    <td style="width: 6%;" >{{ hosting.patient_name }}</td>
+    <td style="width: 6%;" >{{ hosting.patient.city }}</td>
+    <td style="width: 10%;" data-column="hospital_ward">{{ hosting.hospital_ward }}</td>
+    <td style="width: 10%;" data-column="trigger">{{ hosting.trigger }}</td>
+    <td style="width: 10%;" data-column="lodging_start">{{ hosting.lodging_start }}</td>
+    <td style="width: 10%;" data-column="lodging_end">{{ hosting.lodging_end }}</td>
+    <td style="width: 5%;">{{ hosting.count_days }}</td>
+    <td style="width: 5%;">{{ hosting.persons_in_house }}</td>
+    <td style="width: 8%;">
+        {% if hosting.note %}
+        <button type="button" class="btn btn-link p-0" data-toggle="tooltip" data-placement="top" title="{{ hosting.note }}">
+            <i class="fas fa-info-circle"></i>
+        </button>
+        {% else %}
+        -
+        {% endif %}
+    </td>
+    <script>
+        $(document).ready(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+            
+        });
+        
+    </script>
+</tr>
+{% endfor %}

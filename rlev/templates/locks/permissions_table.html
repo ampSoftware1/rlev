@@ -1,0 +1,16 @@
+
+{% for permission in list %}
+
+<tr id="permission_{{ permission.id }}" class="cursor-pointer"  data-id="{{ permission.id }}">
+    <td style="width: 4%;"><input type="checkbox" class="form-check-input check-box-permission" data-id="{{ permission.id }}"></td>
+    <td style="width: 15%;" data-column="person_name">{{ permission.person_name }}</td>
+    <td style="width: 10%;" data-column="role">{{ permission.object.person_role }}</td>
+    <td style="width: 15%;" data-column="card_name">{{ permission.object.full_description }}</td>
+    <td style="width: 10%;" data-column="card_number">{{ permission.object.card_number }}</td>
+    <td style="width: 10%;" data-column="lock_alias">{{ permission.lock_alias }}</td>
+    <td style="width: 10%;" data-column="permission_type">{{ permission.type_permission_description|safe }}</td>
+    <td style="width: 10%;" data-column="date_add">{{ permission.date_add }}</td>
+    <td style="width: 10%;" data-column="last_use">{{ permission.last_use }}</td>
+</tr>
+{% endfor %}
+

@@ -1,0 +1,953 @@
+{% load custom_filters %}
+<div class="modal-header">
+    {% if type_view == 'edit' %}
+    <h5 class="modal-title">פרטי אירוח</h5>
+    {% else %}
+    <h5 class="modal-title">הוספת אירוח חדש <span id="guest_name_title"></span></h5>
+
+    {% endif %}
+    <div class="btn-block">
+        {% if type_view == 'edit' %}
+        <input type="text" hidden id="hosting_id" value="{{ details.id }}">
+        <span class="fs-4">
+            <i class="bi bi-trash text-secondary mx-1 cursor-pointer" data-toggle="tooltip" title="מחק אירוח"
+                id="delete_hosting"></i>
+        </span>
+        {% endif %}
+        <button type="button" class="btn-close btn-block" data-bs-dismiss="modal" aria-label="Close"></button>
+    </div>
+
+</div>
+
+<div class="modal-body">
+
+    <div class="{% if type_view == 'edit' %} d-none {% endif %} window" id="guest_details">
+
+        <div class="d-flex justify-content-between">
+            <h6>פרטי אורח</h6>
+            <div>
+                <span class="badge rounded-pill bg-primary cursor-pointer" id="select_last_hostings">
+                    הצג אירוחים קודמים</span>
+            </div>
+        </div>
+        <div class="border rounded p-3 mb-4">
+            <div class="row mb-1">
+                <div class="col-md-6">
+                    <label for="guest_id_number">מספר זהות</label>
+                    <input type="text" class="form-control form-control-sm id_number_input shadow-sm"
+                        id="guest_id_number" value="{{ details.guest.id_number}}">
+                </div>
+            </div>
+            <div class="row mb-1">
+                <div class="col-md-6">
+                    <label for="guest_first_name">שם פרטי</label>
+                    <input type="text" class="form-control form-control-sm guest_details guest_names shadow-sm"
+                        id="guest_first_name" value="{{ details.guest.first_name }}">
+                </div>
+                <div class="col-md-6">
+                    <label for="guest_last_name">שם משפחה</label>
+                    <input type="text" class="form-control form-control-sm guest_details guest_names shadow-sm" id="guest_last_name"
+                        value="{{ details.guest.last_name}}">
+                </div>
+            </div>
+            <div class="row mb-1">
+                <div class="col-md-6">
+                    <label for="guest_phone">פלאפון</label>
+                    <input type="text" class="form-control form-control-sm guest_details shadow-sm" autocomplete="off" id="guest_phone"
+                        value="{{ details.guest.phone }}">
+                </div>
+                <div class="col-md-6">
+                    <label for="guest_email">אימייל</label>
+                    <input type="text" class="form-control form-control-sm guest_details shadow-sm" autocomplete="off" id="guest_email"
+                        value="{{ details.guest.email }}">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-5">
+                    <label for="guest_address">כתובת</label>
+                    <input type="text" class="form-control form-control-sm guest_details shadow-sm" autocomplete="off" id="guest_address"
+                        value="{{ details.guest.address }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="guest_house_number"> בית</label>
+                    <input type="text" class="form-control form-control-sm guest_details shadow-sm"
+                        id="guest_house_number" autocomplete="off" value="{{ details.guest.house_number }}">
+                </div>
+                <div class="col-md-5">
+                    <label for="guest_city">עיר</label>
+                    <input type="text" class="form-control form-control-sm guest_details shadow-sm" autocomplete="off" id="guest_city"
+                        value="{{ details.guest.city }}">
+                </div>
+            </div>
+            <div class="row mb-1 px-4">
+                <div class="btn-group">
+                    <input type="radio" class="btn-check " name="companion_or_patient" id="companion" {% if not details.guest_is_patient %} checked {% endif %}>
+                    <label class="btn btn-outline-primary btn-sm" for="companion">מלווה</label>
+
+                    <input type="radio" class="btn-check btn-sm" name="companion_or_patient" id="patient" {% if details.guest_is_patient %} checked {% endif %}>
+                    <label class="btn btn-outline-primary btn-sm" for="patient">מטופל</label>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="d-none window" id="patient_details">
+        <h6>פרטי מטופל</h6>
+        <div class="border rounded p-3 mb-4">
+            <div class="row mb-1">
+                <div class="col-md-6">
+                    <label for="patient_id_number">מספר זהות</label>
+                    <input type="text" class="form-control form-control-sm id_number_input shadow-sm"
+                        id="patient_id_number" value="{{ details.patient.id_number }}">
+                </div>
+            </div>
+            <div class="row mb-1">
+                <div class="col-md-6">
+                    <label for="patient_first_name">שם פרטי</label>
+                    <input type="text" class="form-control form-control-sm patient_details shadow-sm"
+                        id="patient_first_name" value="{{ details.patient.first_name}}">
+                </div>
+                <div class="col-md-6">
+                    <label for="patient_last_name">שם משפחה</label>
+                    <input type="text" class="form-control form-control-sm patient_details shadow-sm"
+                        id="patient_last_name" value="{{ details.patient.last_name}}">
+                </div>
+            </div>
+
+            <div class="row mb-1">
+                <div class="col-md-5">
+                    <label for="affinity">קירבה</label>
+                    <input type="text" class="form-control form-control-sm shadow-sm" id="affinity"
+                        value="{{ details.affinity }}">
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="d-none window" id="hosting_details">
+        <div class="row border-bottom">
+            <div class="col-9">
+                <div class="row mb-1">
+                    <div class="col-3">
+                        <label for="trigger">גורם מפנה</label>
+                        <input type="text" class="form-control form-control-sm shadow-sm" id="trigger"
+                            value="{{ details.trigger }}">
+                    </div>
+                    <div class="col-3">
+                        <label for="hospital_ward">מחלקה</label>
+                        <input type="text" class="form-control form-control-sm shadow-sm" id="hospital_ward"
+                            value="{{ details.hospital_ward }}">
+                    </div>
+                    <div class="col-3">
+                        <label for="hospital_ward_eng">מחלקה אנגלית</label>
+                        <input type="text" class="form-control form-control-sm shadow-sm" id="v"
+                            value="{{ details.hospital_ward_eng }}">
+                    </div>
+                    
+                    <div class="col-3">
+                        <label for="documents">מסמכים</label>
+                        <br>
+                        <div id="documents" class="btn-group">
+                            <input type="radio" class="btn-check" name="documents" id="documents_yes" value="1" {% if type_view == 'new' or details.documents %} checked {% endif %}>
+                            <label class="btn btn-outline-primary btn-sm" for="documents_yes">קיים</label>
+
+                            <input type="radio" class="btn-check btn-sm" name="documents" id="documents_no" value="0" {% if type_view == 'edit' and not details.documents %} checked {% endif %}>
+                            <label class="btn btn-outline-primary btn-sm" for="documents_no">חסר</label>
+                        </div>
+                    </div>
+                   
+                </div>
+                <div class="row  pb-1 mb-3">
+                    <div class="row">
+                        <div class="col-6">
+                            <label for="note">הערות</label>
+                            <textarea id="note" class="form-control">{{ details.note }}</textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="row  pb-1 mb-3">
+                    <div class="col-3">
+                        <label for="lodging_start">תאריך התחלת לינה</label>
+                        <input type="date" class="form-control form-control-sm shadow-sm" id="lodging_start"
+                            value="{{ details.lodging_start }}">
+                    </div>
+                    <div class="col-3">
+                        <label for="lodging_end">תאריך סיום לינה</label>
+                        <input type="date" class="form-control form-control-sm shadow-sm" id="lodging_end"
+                            value="{{ details.lodging_end }}">
+                    </div>
+                    <div class="col-3">
+                        <label for="house_description">דירה</label>
+                        <select class="form-control form-control-sm shadow-sm" id="house_id_hosting"
+                            value="{{ details.house_id }}" disabled>
+                            <option></option>
+                            {% for house in houses %}
+                            <option value="{{house.id }}" {% if house.id == details.house_id %}selected {% endif %}>{{ house.description }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-3">
+                        <label for="persons_in_house">כמות אנשים בחדר</label>
+                        <input type="number" class="form-control form-control-sm shadow-sm" id="persons_in_house"
+                            value="{% if details.persons_in_house %}{{ details.persons_in_house }}{% else %}1{% endif %}">
+                    </div>
+                </div>
+            </div>
+            <div class="col-3">
+                <span class="fw-bold"><i class="bi bi-paperclip"></i> קבצים</span>
+                <div>
+                    <span class="px-2"> קובץ 1: </span>
+                    <span class="fs-4">
+                        <i class="bi bi-upload text-secondary mx-1 cursor-pointer upload_file" data-toggle="tooltip" title="העלה קובץ" id="upload_file1" data-file-number="1"></i>
+                    </span>
+                    <span id="spinner_upload1" class="spinner-border spinner-border-sm d-none"></span>
+                    <input type="file" class="fileInput" id="fileInput1" data-file-number="1" style="display: none;" required>
+                    <input type="text" id="file_path1" style="display: none;" value="{{ details.file_path1 }}">
+
+                    <span class="fs-4">
+                        <i class="bi bi-file-earmark-text text-secondary mx-1 view_file cursor-pointer {% if details.file_path1|length == 0 %}d-none{% endif %}" data-toggle="tooltip" title="הצג קובץ"
+                            id="view_file1" data-file-number="1"></i>
+                    </span>
+                    <span class="fs-4">
+                        <i class="bi bi-file-x text-secondary mx-1 delete_file cursor-pointer {% if details.file_path1|length == 0 %}d-none{% endif %}" data-toggle="tooltip" title="מחק קובץ"
+                          id="delete_file1" data-file-number="1"></i>
+                    </span>
+
+                </div>
+
+
+                <div>
+                    <span class="px-2"> קובץ 2: </span>
+                    <span class="fs-4">
+                        <i class="bi bi-upload text-secondary mx-1 cursor-pointer upload_file" data-toggle="tooltip" title="העלה קובץ" id="upload_file2" data-file-number="2"></i>
+                    </span>
+                    <span id="spinner_upload2" class="spinner-border spinner-border-sm d-none"></span>
+                    <input type="file" class="fileInput" id="fileInput2" data-file-number="2" style="display: none;" required>
+                    <input type="text" id="file_path2" style="display: none;" value="{{ details.file_path2 }}">
+
+                    <span class="fs-4">
+                        <i class="bi bi-file-earmark-text text-secondary mx-1 view_file cursor-pointer {% if details.file_path2|length == 0 %}d-none{% endif %}" data-toggle="tooltip" title="הצג קובץ"
+                            id="view_file2" data-file-number="2"></i>
+                    </span>
+                    <span class="fs-4">
+                        <i class="bi bi-file-x text-secondary mx-1 delete_file cursor-pointer {% if details.file_path2|length == 0 %}d-none{% endif %}" data-toggle="tooltip" title="מחק קובץ"
+                          id="delete_file2" data-file-number="2"></i>
+                    </span>
+
+                </div>
+
+            </div>
+        </div>
+        <div class="row" id="select_house_area" style="max-height: 50vh; overflow: auto">
+            {% for house in houses %}
+            <div class="col-3 p-2 house-area" data-house-id="{{ house.id }}">
+                <div class="card house-card cursor-pointer">
+                    <div class="card-header text-center status-hosting-house text-bg-light"
+                        style="font-size: small; height: 7vh">
+
+                    </div>
+                    <div class="card-body text-center fs-6">{{ house.description }}</div>
+
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="{% if type_view == 'new' %} d-none {% endif %} window" id="hosting_summary">
+        <table id="hosting_table" class="table table-clickable table-striped table-hover cursor-pointer">
+            <tr data-replace-to="guest_details" class="window-btn">
+                <td>
+                    שם אורח
+                </td>
+                <td>
+                    {{ details.guest_name }}
+                </td>
+            </tr>
+            <tr data-replace-to="guest_details" class="window-btn">
+                <td>
+                    סטטוס אורח
+                </td>
+                <td>
+                    {{ details.status_guest }}
+                </td>
+            </tr>
+            {% if not details.guest_is_patient %}
+            <tr data-replace-to="patient_details" class="window-btn">
+                <td>
+                    שם מטופל
+                </td>
+                <td>
+                    {{ details.patient_name }}
+                </td>
+            </tr>
+            {% endif %}
+            <tr data-replace-to="hosting_details" class="window-btn">
+                <td>
+                    מחלקה
+                </td>
+                <td>
+                    {{ details.hospital_ward }}
+                </td>
+            </tr>
+            <tr data-replace-to="hosting_details" class="window-btn">
+                <td>תאריך התחלת לינה</td>
+                <td>{{ details.lodging_start }}</td>
+            </tr>
+            <tr data-replace-to="hosting_details" class="window-btn">
+                <td>תאריך סיום לינה</td>
+                <td>{{ details.lodging_end }}</td>
+            </tr>
+            <tr data-replace-to="hosting_details" class="window-btn">
+                <td>דירה</td>
+                <td>{{ details.house_description }}</td>
+            </tr>
+        </table>
+
+        <div class="d-flex justify-content-start align-items-center">
+            <button id="add_cards_to_guest" class="btn btn-sm btn-secondary mx-1"><i class="bi bi-credit-card"></i> הוסף כרטיס</button>
+            <button id="add_permissions_to_guest" class="btn btn-sm btn-secondary mx-1" {% if details.guest.cards|length == 0 %}disabled{% endif %}>
+                <i class="bi bi-shield-plus"></i> הוסף הרשאות <span id="amount_cards">{% if details.guest.cards|length > 0 %}({{ details.guest.cards|length }} כרטיסים){% endif %}</span>
+            </button>
+            <button id="remove_all_permissions_of_guest" class="btn btn-sm btn-secondary mx-1" {% if details.guest.cards|length == 0 %}disabled{% endif %}>
+                <i class="bi bi-shield-slash"></i> מחק ההרשאות</span>
+            </button>
+            <input type="hidden" id="guest_person_id">
+            <input type="hidden" id="guest_cards_ids">
+        </div>
+    </div>
+
+
+
+</div>
+<div class="modal-footer justify-content-between">
+    <div>
+        <button type="button" class="btn btn-primary d-none window-btn" id="prev_window">הקודם</button>
+        <button type="button" class="btn btn-primary window-btn {% if type_view == 'edit' %} d-none {% endif %}"
+            data-replace-to="patient_details" id="next_window">הבא</button>
+    </div>
+    <div>
+        <button type="button" class="btn btn-primary d-none" id="save_hosting_btn">שמור</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+    </div>
+</div>
+<script>
+    var csrfToken = "{{ csrf_token }}";
+
+    $(document).ready(function () {
+        $('[data-toggle="tooltip"]').tooltip();
+        $('#delete_hosting').click(delete_hosting);
+        $("#save_hosting_btn").click(save_hosting);
+        $("input[name='companion_or_patient']").change(function () {
+            if ($(this).attr('id') == 'patient') {
+                $(".patient_details").val('');
+                $("#patient_id_number").val('');
+                $("#next_window").data("replace-to", "hosting_details");
+            } else {
+                $("#next_window").data("replace-to", "patient_details");
+            }
+        });
+        $(".id_number_input").on("keyup change", function (event) {
+            let id_number = $(this).val();
+            if (id_number.length == 0) id_number = 0;
+            let type = $(this).attr('id').replace('_id_number', '');
+
+            if (event.type == "change" || event.keyCode == 13 || event.keyCode == 9 || id_number.length == 9 || id_number == 0) {
+                check_id_number(id_number, type);
+            }
+        });
+
+        $(".guest_names").change(set_guest_name_title);
+
+        $(".window-btn").click(replace_window);
+        $("#lodging_start, #lodging_end").change(get_houses_with_hosting_status);
+        $(".house-area").click(select_house);
+        $("#select_last_hostings").click(function () {
+            let menu = $("#selectLastHosting").toggleClass('d-none d-block').focus();
+        })
+        $("#add_cards_to_guest").click(add_cards_to_guest);
+        $("#add_permissions_to_guest").click(add_permissions_to_guest);
+        $("#remove_all_permissions_of_guest").click(remove_all_permissions_of_guest);
+        get_houses_with_hosting_status();
+        get_details_of_guest();
+        $(".upload_file").click(function () {
+            let fileNumber = $(this).data('file-number');
+            $('#fileInput' + fileNumber).click();
+        });
+        $(".fileInput").on('change', upload_file);
+        $(".view_file").click(function () {
+            let fileNumber = $(this).data('file-number');
+            var url = $("#file_path" + fileNumber).val()
+            url = url.replace("/usr/django_projects/childrens-house/", "")
+            window.open(url, '_blank');
+        });
+        $(".delete_file").click(function () {
+            let fileNumber = $(this).data('file-number');
+            $("#file_path" + fileNumber).val('');
+            $("#view_file" + fileNumber).addClass('d-none');
+            $("#delete_file" + fileNumber).addClass('d-none');
+        })
+
+        affinity_options = ["הורה", "בן/בת זוג", "אח/ות", "ילד/ה", "קרוב משפחה", "ידיד"];;
+        autocomplete("#affinity", affinity_options);
+
+        $.ajax({
+            url: 'get_hosting_options',
+            type: 'GET',
+            success: function (data) {
+                let triggers = data.triggers;
+                let hospital_wards = data.hospital_wards
+                autocomplete("#trigger", triggers);
+                autocomplete("#hospital_ward", hospital_wards);
+            }
+        })
+
+    });
+
+    function set_guest_name_title() {
+        let first_name = $("#guest_first_name").val();
+        let last_name = $("#guest_last_name").val();
+        if (first_name.length && last_name.length) {
+            $("#guest_name_title").text("ל" + first_name + " " + last_name);
+        }
+
+    }
+
+    function get_houses_with_hosting_status() {
+        let lodging_start = $("#lodging_start").val();
+        let lodging_end = $("#lodging_end").val();
+        let hosting_id = $("#hosting_id").val() || 0;
+        let house_id = $("#house_id_hosting").val();
+
+        if (lodging_start.length == 0 || lodging_end.length == 0) {
+            $(".status-hosting-house").text("").removeClass('text-bg-danger text-bg-success text-bg-warning text-bg-secondary').addClass('text-bg-light');
+            return;
+        }
+        data = {
+            "lodging_start": lodging_start,
+            "lodging_end": lodging_end,
+            "by_hosting_id": hosting_id
+        }
+        $.ajax({
+            url: 'get_houses_with_hosting_status',
+            type: 'POST',
+            data: JSON.stringify(data),
+            dataType: 'json',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function (response) {
+                houses = response.houses;
+                $(".status-hosting-house").removeClass('text-bg-danger text-bg-success text-bg-warning text-bg-secondary text-bg-light')
+                houses.forEach(house => {
+                    let status_hosting_house = '';
+                    let bg_color = '';
+                    if (house.id == house_id) {
+                        bg_color = 'text-bg-secondary'
+                        status_hosting_house = '<b>נבחר</b><br>'
+                        font_size = 'large'
+
+                        if (house.hosting_status == 'block') {
+                            let hosting_id = $("#hosting_id").val();
+
+                            if (!hosting_id) {
+                                simple_message_modal("<b> <i class='bi bi-exclamation-circle-fill text-danger'></i> לתשומת לב!</b><br>בדירה שנבחרה ישנו אירוח עבור <b>" + house.hosting_details.guest_name + "</b><br>בין התאריכים: <b>" + house.hosting_details.lodging_start + "</b> ל-<b>" + house.hosting_details.lodging_end + "</b>")
+                            }
+                        }
+                    }
+                    else {
+                        switch (house.hosting_status) {
+                            case 'free':
+                                bg_color = 'text-bg-success'
+                                status_hosting_house = '<b>פנוי</b><br>'
+                                font_size = 'large'
+                                break;
+                            case 'partially':
+                                bg_color = 'text-bg-warning'
+                                status_hosting_house = "<b>" + house.hosting_details.guest_name + "</b><br>" + house.hosting_details.lodging_start + " | " + house.hosting_details.lodging_end
+                                font_size = 'small'
+                                break;
+                            case 'block':
+                                bg_color = 'text-bg-danger'
+                                status_hosting_house = "<b>" + house.hosting_details.guest_name + "</b><br>" + house.hosting_details.lodging_start + " | " + house.hosting_details.lodging_end
+                                font_size = 'small'
+                                break;
+                        }
+                    }
+                    $('.house-area[data-house-id="' + house.id + '"] .status-hosting-house').html(status_hosting_house).addClass(bg_color).css("font-size", font_size);
+                });
+            },
+            error: function () {
+                if (xhr.status == 401) {
+                    window.location.href = '/login';
+                }
+                else {
+                    alert_message("ארעה שגיאה במחיקת הדירה", "error");
+                }
+            }
+        })
+    }
+
+    function replace_window(e, replace_to = null) {
+        if (replace_to == null) {
+            replace_to = $(this).data('replace-to');
+        }
+
+        if ((replace_to == 'hosting_details' || replace_to == 'patient_details') &&
+            ($("#guest_id_number").val().length  === 0 ||
+                $("#guest_first_name").val().length  === 0 ||
+                $("#guest_last_name").val().length  === 0)
+        ) {
+            alert_message('יש להזין פרטי אורח', 'error');
+            return;
+        }
+
+        if (replace_to == 'hosting_details' &&
+            $("#companion").is(":checked") &&
+            ($("#patient_id_number").val().length  === 0 ||
+                $("#patient_first_name").val().length  === 0 ||
+                $("#patient_last_name").val().length  === 0)
+        ) {
+            alert_message('יש להזין פרטי מטופל', 'error');
+            return;
+        }
+
+        $(".window").addClass("d-none");
+        $("#" + replace_to).removeClass("d-none");
+
+
+        if (replace_to == 'hosting_details') {
+
+            $("#next_window").addClass("d-none");
+            $("#prev_window").removeClass("d-none");
+            if ($("#patient").is(":checked")) $("#prev_window").data("replace-to", "guest_details");
+            else $("#prev_window").data("replace-to", "patient_details");
+
+            $("#save_hosting_btn").removeClass("d-none");
+            $("#hosting_modal").removeClass('modal-md').addClass('modal-xl');
+        }
+        if (replace_to == 'guest_details') {
+            $("#prev_window").addClass("d-none");
+            $("#next_window").removeClass("d-none");
+            if ($("#patient").is(":checked")) $("#next_window").data("replace-to", "hosting_details");
+            else $("#next_window").data("replace-to", "patient_details");
+            $("#hosting_modal").removeClass('modal-xl').addClass('modal-md');
+        }
+        if (replace_to == 'patient_details') {
+            $("#next_window").removeClass("d-none").data("replace-to", "hosting_details");
+            $("#prev_window").removeClass("d-none").data("replace-to", "guest_details");
+            $("#hosting_modal").removeClass('modal-xl').addClass('modal-md');
+        }
+        if (replace_to == 'hosting_summary') {
+            $("#next_window").addClass("d-none");
+            $("#prev_window").addClass("d-none");
+            $("#hosting_modal").removeClass('modal-xl').addClass('modal-md');
+        }
+
+    }
+
+    async function delete_hosting() {
+        let hosting_id = $("#hosting_id").val();
+        try {
+            await confirmation_modal('האם הנך בטוח שברצונך למחוק את האירוח?');
+
+            $.ajax({
+                url: "delete_hosting/" + hosting_id,
+                type: "GET",
+                success: function (response) {
+                    if (response.success) {
+                        alert_message("האירוח נמחקה בהצלחה", "ok");
+                        $("#hosting_modal").modal('hide');
+                        refresh_hostings_windows();
+
+                    }
+                    else {
+                        alert_message(response.error, "error");
+                    }
+                },
+                error: function () {
+                    if (xhr.status == 401) {
+                        window.location.href = '/login';
+                    }
+                    else {
+                        alert_message("ארעה שגיאה במחיקת הדירה", "error");
+                    }
+                }
+            });
+        } catch (error) {
+        }
+    }
+
+
+    function save_hosting() {
+
+        let hosting_id = $("#hosting_id").val() || 0;
+        let guest_is_patient = 0;
+        if ($("#patient").is(":checked")) {
+            guest_is_patient = 1;
+        }
+        let guest_details = { "id_number": $("#guest_id_number").val() }
+        let patient_details = { "id_number": $("#patient_id_number").val() }
+
+
+        person_fields.forEach(key => {
+            guest_details[key] = $("#guest_" + key).val();
+        });
+
+        person_fields.forEach(key => {
+            patient_details[key] = $("#patient_" + key).val();
+        });
+
+        let affinity = $("#affinity").val();
+
+        let hospital_ward = $("#hospital_ward").val();
+        let hospital_ward_eng = $("#hospital_ward_eng").val();
+        let lodging_start = $("#lodging_start").val();
+        let lodging_end = $("#lodging_end").val();
+        let house_id = $("#house_id_hosting").val();
+        let trigger = $("#trigger").val();
+        let documents = $('input[name="documents"]:checked').val();
+        let note = $("#note").val();
+        let file_path1 = $("#file_path1").val();
+        let file_path2 = $("#file_path2").val();
+        let persons_in_house = $("#persons_in_house").val();
+
+        if (guest_details.id_number.length == 0 || guest_details.first_name.length == 0 || guest_details.last_name.length == 0) {
+            alert_message('יש להזין פרטי אורח', 'error');
+            return;
+        }
+
+
+        if (guest_is_patient == 0 && (patient_details.id_number.length == 0 || patient_details.first_name.length == 0 || patient_details.last_name.length == 0)) {
+            alert_message('יש להזין פרטי מטופל', 'error');
+            return;
+        }
+
+        if (lodging_start.length == 0 || lodging_end.length == 0) {
+            alert_message('יש להזין תאריכי לינה', 'error');
+            return;
+        }
+
+
+        if (hospital_ward.length == 0) {
+            alert_message('יש לבחור מחלקה', 'error');
+            return;
+        }
+
+        if (!documents) {
+            alert_message('יש לבחור ערך בשדה מסמכים', 'error');
+            return;
+        }
+
+
+        if (house_id.length == 0) {
+            alert_message('יש לבחור דירה', 'error');
+            return;
+        }
+
+        data = {
+            "hosting_id": hosting_id,
+            "guest_is_patient": guest_is_patient,
+            "guest_details": guest_details,
+            "patient_details": patient_details,
+            "affinity": affinity,
+            "hospital_ward": hospital_ward,
+            "hospital_ward_eng": hospital_ward_eng,
+            "lodging_start": lodging_start,
+            "lodging_end": lodging_end,
+            "documents": documents,
+            "trigger": trigger,
+            "note": note,
+            "file_path1": file_path1,
+            "file_path2": file_path2,
+            "house_id": house_id,
+            "persons_in_house": persons_in_house
+        }
+
+        $.ajax({
+            url: "save_hosting",
+            type: "POST",
+            data: JSON.stringify(data),
+            dataType: 'json',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function (data) {
+                if (hosting_id.length) alert_message('השינויים נשמרו בהצלחה', 'ok');
+                else alert_message('האירוח נוסף בהצלחה', 'ok');
+
+                hosting_id = data.hosting_id;
+                loadContent('#hosting_modal_content', 'hosting/' + hosting_id, false,
+                    function () {
+                        $("#hosting_modal").removeClass('modal-xl').addClass('modal-md');
+                    }
+                );
+                refresh_hostings_windows();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status == 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function select_house() {
+
+        let house_select = $(this).data("house-id");
+
+        $("#house_id_hosting").val(house_select);
+        get_houses_with_hosting_status();
+    }
+
+    function check_id_number(id_number, type) {
+
+        $.ajax({
+            url: 'check_id_number/' + id_number,
+            type: 'GET',
+            dataType: 'json',
+            success: function (data) {
+                if (data.exist) {
+                    person_fields.forEach(key => {
+                        $("#" + type + "_" + key).val(data.details[key]);
+                    });
+                } else {
+                    $("." + type + "_details").val("");
+                }
+                check_hosting_record();
+            },
+            error: function () {
+                if (xhr.status == 401) {
+                    window.location.href = '/login';
+                }
+
+            }
+        });
+    }
+
+    function upload_file() {
+        let fileNumber = $(this).data('file-number');
+        $("#spinner_upload" + fileNumber).removeClass('d-none');
+        $("#upload_file" + fileNumber).addClass('d-none');
+
+        const file = this.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        $.ajax({
+            url: 'upload_file',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function (response) {
+                if (response.success) {
+                    $('#file_path' + fileNumber).val(response.file_path);
+                    alert_message("הקובץ הועלה בהצלחה", "ok")
+                    $("#view_file" + fileNumber).removeClass('d-none');
+                    $("#delete_file" + fileNumber).removeClass('d-none');
+                } else {
+                    alert_message("שגיאה בהעלאת הקובץ", "error")
+                }
+                $("#spinner_upload" + fileNumber).addClass('d-none');
+                $("#upload_file" + fileNumber).removeClass('d-none');
+            },
+            error: function () {
+                alert_message("שגיאה בהעלאת הקובץ", "error")
+            }
+        });
+
+    }
+
+    function check_hosting_record() {
+        let guest_id_number = $("#guest_id_number").val();
+        if (guest_id_number.length == 0) return;
+
+        $.ajax({
+            url: 'get_hosting_record/' + guest_id_number,
+            type: 'GET',
+            dataType: 'json',
+            success: function (response) {
+                let record = response.record;
+                let hostings = response.hostings;
+                if (hostings.length > 0) {
+                    let btn = $('#select_last_hostings');
+                    let btn_position = btn.position();
+                    let btn_position_height = btn.outerHeight();
+
+                    let existingMenu = $('#selectLastHosting');
+                    if (existingMenu.length) existingMenu.remove();
+
+                    let SelectInput = $('<div id="selectLastHosting">').addClass('dropdown-menu shadow d-none')
+                        .css({ 'width': '50vh', 'position': 'absolute', 'left': btn_position.left + 'px', 'top': btn_position.top + btn_position_height + 'px' })
+                        .on('focusout', function () {
+                            $(this).addClass('d-none');
+                        });
+                    let menuItem = $('<div>')
+                        .addClass('cursor-pointer dropdown-item small border-bottom')
+                        .html(`<div class="row">
+                                            <div class="col-4 px-1 fw-bold">סטטוס</div>
+                                            <div class="col-4 px-1 fw-bold">שם מטופל</div>
+                                            <div class="col-4 px-1 fw-bold">מחלקה</div>
+                                        </div>`);
+                    SelectInput.append(menuItem)
+
+                    hostings.forEach(function (hosting) {
+                        let menuItem = $('<div>')
+                            .addClass('cursor-pointer dropdown-item small border-bottom')
+                            .css({ 'padding': '0.5rem 1rem' })
+                            .html(`<div class="row">
+                                            <div class="col-4 px-1">${hosting.status_guest}</div>
+                                            <div class="col-4 px-1">${hosting.patient_name}</div>
+                                            <div class="col-4 px-1">${hosting.hospital_ward}</div>
+                                        </div>`)
+                            .attr('data-hosting-id', hosting.id)
+                            .on('click', function () {
+                                let hostingId = $(this).data('hosting-id');
+                                load_from_last_hosting(hosting);
+                                $('#selectLastHosting').toggleClass('d-none d-block');
+                            });
+                        SelectInput.append(menuItem);
+                    });
+
+                    $('#guest_details').append(SelectInput);
+                    SelectInput.focus();
+                }
+                else if (record) {
+                    $("#hospital_ward").val(record.hospital_ward);
+                    if (record.guest_is_patient) $('#patient').prop('checked', true).change();
+                    else {
+                        $('#companion').prop('checked', true).change();
+                        $("#patient_id_number").val(record.patient.id_number);
+                        $("#patient_first_name").val(record.patient.first_name);
+                        $("#patient_last_name").val(record.patient.last_name);
+                        $("#affinity").val(record.affinity);
+                    }
+                }
+
+            }
+        })
+    }
+
+    function load_from_last_hosting(hosting) {
+
+        $("#hospital_ward").val(hosting.hospital_ward);
+        $("#trigger").val(hosting.trigger);
+        if (hosting.guest_is_patient) $('#patient').prop('checked', true).change();
+        else {
+            $('#companion').prop('checked', true).change();
+            $("#patient_id_number").val(hosting.patient.id_number);
+            $("#patient_first_name").val(hosting.patient.first_name);
+            $("#patient_last_name").val(hosting.patient.last_name);
+            $("#affinity").val(hosting.affinity);
+        }
+        replace_window(null, 'hosting_details');
+    }
+
+    function get_details_of_guest() {
+        let guest_id_number = $("#guest_id_number").val();
+        if (guest_id_number.length == 0) return;
+
+        return $.ajax({
+            url: 'get_details_of_guest/' + guest_id_number,
+            type: 'GET',
+            dataType: 'json',
+            success: function (person_details) {
+                $("#guest_person_id").val(person_details.id);
+
+                let cards = person_details.cards
+                const cards_ids = cards.map(card => card.id);
+                const cards_ids_str = `[${cards_ids.join(',')}]`;
+                $("#guest_cards_ids").val(cards_ids_str)
+
+                count_cards = cards.length
+                if (count_cards) {
+                    $("#add_permissions_to_guest").attr("disabled", false);
+                    $("#amount_cards").text("(" + count_cards + " כרטיסים)");
+                }
+                else {
+                    $("#add_permissions_to_guest").attr("disabled", true);
+                    $("#amount_cards").text('');
+                }
+
+            }
+        })
+    }
+
+    function add_cards_to_guest() {
+        let guest_person_id = $("#guest_person_id").val();
+        loadContent('#md-modal-content', 'add_card/' + guest_person_id);
+        $('#modal-md').modal('show');
+    }
+
+    function add_permissions_to_guest() {
+        let cards_ids = $("#guest_cards_ids").val()
+        let house_id_hosting = $("#house_id_hosting").val()
+        let lodging_start = $("#lodging_start").val()
+        let lodging_end = $("#lodging_end").val()
+
+        data = {
+            cards: cards_ids,
+            from_hosting: true,
+            house_id: house_id_hosting,
+            lodging_start: lodging_start,
+            lodging_end: lodging_end,
+            by_object: 'multy',
+        };
+
+        $.ajax({
+            url: 'add_permissions',
+            type: 'POST',
+            dataType: 'html',
+            data: JSON.stringify(data),
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            success: function (data) {
+                $('#md-modal-content').html(data);
+                $('#modal-md').modal('show');
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status  === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+
+    }
+
+    async function remove_all_permissions_of_guest() {
+        let guest_person_id = $("#guest_person_id").val();
+
+        await confirmation_modal('האם הנך בטוח שברצונך למחוק את ההרשאות של האורח?');
+
+        $.ajax({
+            url: 'remove_permissions',
+            type: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            contentType: 'application/json',
+            data: JSON.stringify({ person_id: guest_person_id }),
+            success: function (response) {
+                locks_to_sync = response.locks_to_sync
+                transmission(locks_to_sync);
+                alert_message('ביטול ההרשאות נשלח לשידור', 'ok');
+
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status  === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+
+    }
+
+
+
+</script>

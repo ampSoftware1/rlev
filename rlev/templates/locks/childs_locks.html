@@ -1,0 +1,201 @@
+<div class="modal-header d-flex justify-content-between align-items-center">
+    <h5 class="modal-title">ניהול {{ child_description }}</h5>
+    {% if child_name == 'group' %}
+    <span id="add_group_btn" class="fs-3 cursor-pointer">
+        <i class="bi bi-bookmark-plus" data-toggle="tooltip" title="הוסף קבוצה חדשה"></i>
+    </span>
+    {% endif %}
+</div>
+<div class="modal-body" style="max-height: 50vh;
+            height: 50vh;
+            overflow-y: auto">
+    <table class="table table-striped table-hover table-sm border cursor-pointer">
+        <tbody>
+            {% for child in childs %}
+            <tr class="child" data-child-id="{{ child.id }}">
+                <td>
+                    <div class="d-flex justify-content-between">
+                        <div class="col-4">{{ child.description }}</div>
+                        <div class="col-3">
+                            <span class="badge rounded-pill text-dark count-locks">{{ child.count_locks }}</span>
+                        </div>
+                        <div class="col-4 justify-content-end add-locks-btn"></div>
+                        <div class="col-1">
+                            {% if child_name == 'group' %}
+                            <span class="delete-group cursor-pointer" data-group-id="{{ child.id }}">
+                                <i class="bi bi-trash"></i>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+</div>
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    $(document).ready(function () {
+        $('.delete-group').click(delete_group);
+        $('#add_group_btn').click(add_group);
+
+        $('.child').click(show_child_locks);
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+
+    function get_child_locks(child_id, callback) {
+        $.ajax({
+            url: 'get_child_locks/' + "{{ child_name}}" + '/' + child_id,
+            method: 'GET',
+            success: function (data) {
+                callback(data);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function show_child_locks() {
+        if ($(this).hasClass('table-primary')) {
+            $(this).removeClass('table-primary');
+            $('#locks_list_container').remove();
+            $('.add-locks-btn').html('');
+            return;
+        }
+        $(this).siblings().removeClass('table-primary');
+        $(this).addClass('table-primary');
+        let child_id = $(this).data('child-id');
+
+        $('.add-locks-btn').html('');
+        $('#locks_list_container').remove();
+
+        let locks_list_container = $('<div>').addClass('border rounded m-1 p-1').attr('id', 'locks_list_container').css({
+            'max-width': '100%',
+            'height': '20vh',
+            'overflow-y': 'auto',
+            'overflow-x': 'auto'
+        });
+
+        let locks_list = $("<div>").addClass("d-flex flex-wrap justify-content-start align-items-start").attr("id", "locks_list")
+        locks_list_container.append(locks_list);
+
+        $(this).after(locks_list_container);
+
+        let add_locks_btn = $('<span>').addClass('badge rounded-pill bg-primary').css(
+            'cursor', 'pointer',
+            'font-size', 'small'
+        ).html('<i class="bi bi-plus-circle"></i> הוסף מנעולים').data('child-id', child_id).click(add_locks_to_child);
+
+        $(this).find('.add-locks-btn').html(add_locks_btn);
+
+        get_child_locks(child_id, function (data) {
+            load_child_locks(data);
+        });
+    }
+
+    function load_child_locks(data) {
+        $('.table-primary').find('.count-locks').text(data.count_locks);
+
+        let locks = data.locks;
+        $('#locks_list').empty();
+        locks.forEach(lock => {
+            let lockItem = $('<div>').addClass('d-flex justify-content-between align-items-center bg-secondary rounded m-1').css(
+                'width', 'fit-content'
+            );
+            let span = $('<span>').addClass('text-white fw-bold mx-1').css('font-size', 'small').text(lock.alias);
+            let btn = $('<button>').addClass('btn btn-secondary rounded-end p-0 px-1 lock_link_btn').css('font-size', 'small').text('x').attr('data-id', lock.id).click(remove_lock_from_child);
+            $(lockItem).append(span).append(btn);
+            $('#locks_list').append(lockItem);
+        });
+    }
+
+    function remove_lock_from_child() {
+        let lock_id = $(this).data('id');
+        let child_id = $('.table-primary').data('child-id');
+        $.ajax({
+            url: 'add_or_remove_locks_to_child',
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            contentType: 'application/json',
+            data: JSON.stringify({ action: 'remove', lock_id: lock_id, child_name: "{{ child_name }}", child_id: child_id }),
+            success: function (data) {
+                load_child_locks(data);
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    async function add_locks_to_child() {
+        event.stopPropagation();
+        try {
+            let selected_locks = await select_locks();
+            let locks_ids = selected_locks.locks_ids;
+            if (locks_ids.length == 0) {
+                return;
+            }
+
+            let child_id = $(this).data('child-id');
+            $.ajax({
+                url: 'add_or_remove_locks_to_child',
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                contentType: 'application/json',
+                data: JSON.stringify({ action: 'add', locks: locks_ids, child_name: "{{ child_name }}", child_id: child_id }),
+                success: function (data) {
+                    load_child_locks(data);
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    if (xhr.status === 401) {
+                        window.location.href = '/login';
+                    }
+                }
+            });
+        }
+        catch (error) {
+            console.error(error);
+        }
+    }
+
+    async function delete_group() {
+        event.stopPropagation();
+
+        await confirmation_modal('האם הנך בטוח שברצונך למחוק את הקבוצה?');
+
+        let group_id = $(this).data('group-id');
+        $.ajax({
+            url: 'delete_group/' + group_id,
+            method: 'GET',
+            success: function (data) {
+                $('.child[data-child-id=' + group_id + ']').remove();
+                $('#locks_list_container').remove();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function add_group() {
+        loadContent('#md-modal-content', 'access_group');
+        $('#modal-md').modal('show');
+    }
+
+
+</script>

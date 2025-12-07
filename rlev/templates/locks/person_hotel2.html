@@ -1,0 +1,234 @@
+<div class="modal-header">
+    {% if type_view == 'edit' %}
+    <h5 class="modal-title">עריכת אורח</h5>
+    {% else %}
+    <h5 class="modal-title">הוספת אורח</h5>
+    {% endif %}
+    <div>
+        {% if type_view == 'edit' %}
+        <span class="fs-4">
+            {% if allow_feedback %}
+            <i class="bi bi-send {% if details.send_feedback %} btn-secondary {% else %} btn-success {% endif %} mx-1 cursor-pointer" data-toggle="tooltip" title="שלח טופס משוב" id="send_feedback"></i>
+            {% endif %}
+            <i class="bi bi-trash text-secondary mx-1 cursor-pointer" data-toggle="tooltip" title="מחק אורח" id="delete_person"></i>
+        </span>
+        {% endif %}
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+</div>
+<div class="modal-body">
+    <div class="row mb-2">
+        <div class="col-6">
+            {% if type_view == 'edit' %}
+            <input hidden type="text" id="person_id" value="{{ details.id }}">
+            <label for="id_number">מספר זהות \ דרכון</label>
+            <input type="text" class="form-control form-control-sm person-details" id="id_number" disabled value="{{ details.id_number }}">
+            {% else %}
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="id_number_or_passport" id="id_number_option" checked>
+                <label class="form-check-label" for="id_number_option">מספר זהות</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="id_number_or_passport" id="passport_option">
+                <label class="form-check-label" for="passport_option">דרכון</label>
+            </div>
+            <input type="text" class="form-control form-control-sm person-details" id="id_number" placeholder="מספר זהות">
+            {% endif %}
+
+        </div>
+    </div>
+    <div class="row mb-2">
+
+        <div class="col-6">
+            <label for="first_name">שם פרטי</label>
+            <input type="text" class="form-control form-control-sm person-details" id="first_name" placeholder="שם פרטי" value="{{ details.first_name }}">
+        </div>
+        <div class="col-6">
+            <label for="last_name">שם משפחה</label>
+            <input type="text" class="form-control form-control-sm person-details" id="last_name" placeholder="שם משפחה" value="{{ details.last_name }}">
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-6">
+            <div class="form-group">
+                <label for="person_phone">טלפון</label>
+                <input type="text" class="form-control form-control-sm person-details" id="person_phone" placeholder="טלפון" value="{{ details.person_phone }}">
+            </div>
+        </div>
+        <div class="col-6">
+            <label for="email">אימייל</label>
+            <input type="text" class="form-control form-control-sm person-details" id="email" placeholder="אימייל" value="{{ details.email }}">
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-4">
+            <label for="person_name">כתובת</label>
+            <input type="text" class="form-control form-control-sm person-details" id="address" placeholder="כתובת" value="{{ details.address }}">
+        </div>
+        <div class="col-4">
+            <label for="house_number">מספר בית</label>
+            <input type="text" class="form-control form-control-sm person-details" id="house_number" placeholder="מספר בית" value="{{ details.house_number }}">
+        </div>
+        <div class="col-4">
+            <label for="city">עיר</label>
+            <input type="text" class="form-control form-control-sm person-details" id="city" placeholder="עיר" value="{{ details.city }}">
+        </div>
+    </div>
+    <div class="row mb-2">
+        <div class="col-6">
+            <label for="hospital_ward">מחלקה</label>
+            <select type="text" class="form-control form-control-sm person-details" id="hospital_ward" placeholder="מחלקה" value="{{ details.hospital_ward }}">
+                <option></option>
+                <option {% if details.hospital_ward_val == 1 %} selected {% endif %}>אונקולוגיה ילדים</option>
+                <option {% if details.hospital_ward_val == 2 %} selected {% endif %}>אונקולוגיה מבוגרים</option>
+                <option {% if details.hospital_ward_val == 3 %} selected {% endif %}>נפגעי חרבות ברזל</option>
+                <option {% if details.hospital_ward_val == 99 %} selected {% endif %}>אחר</option>
+            </select>
+        </div>
+
+        <div id="hospital_ward_athoer_div" class="col-6 {% if not details.hospital_ward_val == 99 %} d-none {% endif %}">
+            <label for="hospital_ward_athoer"></label>
+            <input type="text" class="form-control form-control-sm person-details" id="hospital_ward_athoer" placeholder="הזן מחלקה.." value="{{ details.hospital_ward }}">
+        </div>
+
+    </div>
+    <div class="row mb-2">
+        <div class="col-6">
+            <label for="lodging_start">התחלת לינה</label>
+            <input type="date" class="form-control form-control-sm person-details" id="lodging_start" placeholder="התחלת לינה" value="{{ details.lodging_start }}">
+        </div>
+        <div class="col-6">
+            <label for="lodging_end">סיום לינה</label>
+            <input type="date" class="form-control form-control-sm person-details" id="lodging_end" placeholder="סיום לינה" value="{{ details.lodging_end }}">
+        </div>
+    </div>
+
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+    <button type="button" id="save_person" class="btn btn-primary">שמור</button>
+</div>
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    $(document).ready(function () {
+        $('#save_person').click(save_person);
+        $('#delete_person').click(delete_person);
+        $("#send_feedback").click(send_feedback);
+
+        $("#hospital_ward").change(function(){
+            if ($("#hospital_ward").val() == 'אחר'){
+                $("#hospital_ward_athoer_div").removeClass('d-none');
+                $("#hospital_ward_athoer").val('');
+            }
+            else{
+                $("#hospital_ward_athoer_div").addClass('d-none');
+            }
+        })
+    });
+
+    async function send_feedback() {
+        let btn = $(this);
+        if (btn.hasClass('btn-secondary')) {
+            await confirmation_modal('כבר נשלח משוב לאורח, האם לשלוח שוב?');
+        }
+
+        let person_id = $("#person_id").val();
+        let email = $("#email").val();
+        if (email.length == 0) {
+            alert_message('אין אימייל מוגדר', 'error');
+            return;
+        }
+        $.ajax({
+            url: "send_feedback/icilov/" + person_id,
+            type: "GET",
+            success: function (response) {
+                console.log(response)
+                btn.removeClass('btn-success').addClass('btn-secondary');
+                alert_message('טופס משוב נשלח בהצלחה', 'ok');
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status ===  401) {
+                    window.location.href = '/login';
+                }
+            }
+        })
+    }
+
+    async function delete_person() {
+        let person_id = $('#person_id').val();
+        await confirmation_modal('האם הנך בטוח שברצונך למחוק את האורח?');
+        $.ajax({
+            url: 'delete_person_hotel2/' + person_id,
+            type: 'GET',
+            contentType: 'application/json',
+            success: function (data) {
+                alert_message('האורח נמחק בהצלחה', 'ok');
+                loadContent('#content', 'persons_hotel2', false);
+                $('#modal-md').modal('hide');
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status  === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function save_person() {
+        let person_id = $('#person_id').val();
+        let id_number = $('#id_number').val();
+        let first_name = $('#first_name').val();
+        let last_name = $('#last_name').val();
+        let email = $('#email').val();
+        let house_number = $('#house_number').val();
+        let address = $('#address').val();
+        let city = $('#city').val();
+        let person_phone = $('#person_phone').val();
+        let lodging_start = $('#lodging_start').val();
+        let lodging_end = $('#lodging_end').val();
+        let hospital_ward = '';
+        if ($("#hospital_ward_athoer_div").hasClass('d-none')) hospital_ward = $("#hospital_ward").val();
+        else hospital_ward = $("#hospital_ward_athoer").val();
+
+
+        let data = {
+            person_id: person_id,
+            id_number: id_number,
+            first_name: first_name,
+            last_name: last_name,
+            email: email,
+            house_number: house_number,
+            address: address,
+            city: city,
+            person_phone: person_phone,
+            hospital_ward: hospital_ward,
+        };
+
+        if (lodging_start.length) data['lodging_start'] = lodging_start
+        if (lodging_end.length) data['lodging_end'] = lodging_end
+
+        $.ajax({
+            url: 'save_person/hotel2',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: function (xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", csrfToken);
+            },
+            success: function (data) {
+                if (data.success) {
+                    alert_message('האורח נשמר בהצלחה', 'ok');
+                    loadContent('#content', 'persons_hotel2', false);
+                    $('#modal-md').modal('hide');
+                } else {
+                    alert_message(data.error, 'error');
+                }
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status  === 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+</script>

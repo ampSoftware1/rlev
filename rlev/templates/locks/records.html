@@ -1,0 +1,148 @@
+{% load custom_filters %}
+<div class="sticky-top p-3  bg-white border-bottom d-flex justify-content-between align-items-center"
+    style="z-index: 1000; height: 10vh">
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <div>
+                <span class="fs-4 fw-bold ">רשומות נעילה</span>
+            </div>
+            <span style="margin-right: 35px; margin-left: 10px"> סוג רשומה</span>
+            <select class="form-select" id="filter_type" style="width: 250px;">
+                <option class="text-secondary">הכל</option>
+                <option>ביטול נעילה באמצעות אפליקציה</option>
+                <option>ביטול נעילה באמצעות סיסמה</option>
+                <option>ביטול נעילה באמצעות כרטיס</option>
+                <option>ביטול נעילה באמצעות קוד סיסמה</option>
+                <option>ביטול נעילה באמצעות טביעת אצבע</option>
+                <option>נעילה מרוחקת באמצעות שער</option>
+                <option>ביטול נעילה מרוחק באמצעות שער</option>
+                <option>נעילה באמצעות מפתח מנעול</option>
+                <option>ביטול נעילה באמצעות כרטיס נכשל - פג תוקף</option>
+                <option>ביטול הנעילה באמצעות טביעת אצבע נכשל - פג תוקף</option>
+                <option>ביטול הנעילה באמצעות כרטיס נכשל - בוצעה נעילה כפולה</option>
+                <option>ביטול הנעילה באמצעות טביעת אצבע נכשל - בוצעה נעילה כפולה</option>
+                <option>ביטול הנעילה על ידי אפליקציה נכשל - בוצעה נעילה כפולה</option>
+                <option>נעילה אוטומטית</option>
+                <option>נעילת מערכת</option>
+                <option>ביטול נעילה באמצעות פלאפון</option>
+                <option>ביטול נעילה באמצעות קוד סיסמה נכשל - קוד סיסמה לא ידוע</option>
+
+            </select>
+        </div>
+
+
+    </div>
+    <span class="fs-4">
+        <span title="רענן רשומות" class="mx-1 refresh-records cursor-pointer" data-toggle="tooltip"><i
+                class="bi bi-arrow-clockwise cursor-pointer"></i></span>
+    </span>
+
+</div>
+<div class="p-3 bg-white">
+    <table id="recordsTable" class="table table-hover table-striped table-bordered">
+        <thead class="bg-white position-sticky" style="top: 10vh">
+            <tr class="cursor-pointer">
+                <th data-column="time">תאריך ושעה <i class="bi bi-caret-down-fill time asc d-none"></i> <i
+                        class="bi bi-caret-up-fill time desc d-none "></i> </th>
+                <th data-column="lock_alias">שם מנעול <i class="bi bi-caret-down-fill lock_alias asc d-none"></i> <i
+                        class="bi bi-caret-up-fill lock_alias desc d-none "></i> </th>
+                <th data-column="record_type_description">סוג רשומה <i
+                        class="bi bi-caret-down-fill record_type_description asc d-none"></i> <i
+                        class="bi bi-caret-up-fill record_type_description desc d-none "></i> </th>
+                <th data-column="done_by">בוצע על ידי<i class="bi bi-caret-down-fill done_by asc d-none"></i> <i
+                        class="bi bi-caret-up-fill done_by desc d-none "></i> </th>
+                <th data-column="username">פרטי אמצעי זיהוי<i class="bi bi-caret-down-fill username asc d-none"></i> <i
+                        class="bi bi-caret-up-fill username desc d-none "></i> </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in records %}
+            <tr {% if record.record_type == 25 or record.record_type == 39 or record.record_type == 40 or record.record_type == 41 or record.record_type == 48 or record.record_type == 7 %} 
+            class="table-danger"
+             {% endif %}>
+                <td hidden data-column="time">{{ record.time }}</td>
+                <td data-column="date">{{ record.date }}</td>
+                <td data-column="lock_alias">{{ record.lock_alias }}</td>
+                <td data-column="record_type_description">{{ record.record_type_description }}</td>
+                <td data-column="done_by">{{ record.done_by }}</td>
+                <td data-column="object_record_description">
+                    {% if record.type_object_id == 8 %}
+                    <i class="bi bi-credit-card"></i>
+                    {% elif record.type_object_id == 16 %}
+                    <i class="bi bi-phone"></i>
+                    {% endif %}
+                {{ record.object_record_description }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+<script>
+    $(document).ready(function () {
+        $(".refresh-records").click(async function () {
+            alert_message('מתחיל ייבוא רשומות', 'ok')
+            fetch('import_locks_records')
+        });
+
+
+        var sortColumn = 'date';
+        var sortOrder = 'desc';
+
+        $("#filter_type").change(filter_type);
+
+        $('#recordsTable th').on('click', function () {
+            var column = $(this).data('column');
+
+            if (column === sortColumn) {
+                sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortColumn = column;
+                sortOrder = 'asc';
+            }
+
+            $('#recordsTable th').removeClass('sorted-asc sorted-desc');
+            $(this).addClass('sorted-' + sortOrder);
+
+            sortTable(sortColumn, sortOrder);
+        });
+
+        $('[data-toggle="tooltip"]').tooltip();
+    });
+
+    function filter_type() {
+        let val = $(this).val();
+        if (val === 'הכל') {
+            $('#recordsTable tbody tr').show();
+        } else {
+            $('#recordsTable tbody tr').hide();
+            $('#recordsTable tbody tr').filter(function () {
+                return $(this).find('td:eq(3)').text() === val;
+            }).show();
+        }
+    }
+
+    function sortTable(column, order) {
+        var tbody = $('#recordsTable tbody');
+        var rows = tbody.find('tr').get();
+
+        rows.sort(function (a, b) {
+            var aValue = $(a).find('td[data-column="' + column + '"]').text();
+            var bValue = $(b).find('td[data-column="' + column + '"]').text();
+
+            if (order === 'asc') {
+                return aValue.localeCompare(bValue);
+            } else {
+                return bValue.localeCompare(aValue);
+            }
+        });
+
+        tbody.empty().append(rows);
+        $('.desc').addClass('d-none');
+        $('.asc').addClass('d-none');
+        $("." + column + "." + order).removeClass('d-none');
+    }
+
+
+</script>

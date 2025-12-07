@@ -1,0 +1,171 @@
+{% load custom_filters %}
+<div class="p-3 d-flex justify-content-between align-items-center" style="height: 10vh;" data-model-name="hosting">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <span class="fs-4 fw-bold "><i class="bi bi-suitcase2"></i> אירוחים</span>
+        </div>
+        <div class="mx-2">
+            <label>חפש אורח או מטופל</label>
+            <input type="text" data-field-name="*name" class="form-control filter-control hosting-filter" placeholder="הזן שם ...">
+        </div>
+        <div class="mx-2">
+            <label>דירה</label>
+            <select data-field-name="house_id" class="form-select form-control filter-control hosting-filter">
+                <option value="">הכל</option>
+                {% for house in houses %}
+                <option value="{{ house.id}}">{{ house.description }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mx-2" style="width: 20vh;">
+            <label>מחלקה</label>
+            <select data-field-name="hospital_ward" class="form-select form-control filter-control hosting-filter">
+                <option value="">הכל</option>
+                {% for ward in wards %}
+                <option>{{ ward }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mx-2">
+            <label>תאריך כניסה החל מ-</label>
+            <input type="date" data-field-name="lodging_start__gte" class="form-control filter-control hosting-filter ">
+        </div>
+        <div class="mx-3">
+            <label>עד</label>
+            <input type="date" data-field-name="lodging_start__lte" class="form-control filter-control hosting-filter ">
+        </div>
+        <div class="mx-3">
+            <label>תאריך יציאה החל מ-</label>
+            <input type="date" data-field-name="lodging_end__gte" class="form-control filter-control hosting-filter ">
+        </div>
+        <div class="mx-3">
+            <label>עד</label>
+            <input type="date" data-field-name="lodging_end__lte" class="form-control filter-control hosting-filter ">
+        </div>
+
+    </div>
+
+    <div class="fs-4 text-end">
+
+        <span>
+            <i class="bi bi-file-earmark-ruled cursor-pointer mx-2 hosting-report" data-toggle="tooltip" title="דוח אירוחים מרוכז" date-type-report="summary"></i>
+        </span>
+        <span>
+            <i class="bi bi-file-earmark-ruled cursor-pointer mx-2 hosting-report" data-toggle="tooltip" title="דוח אירוחים לפי יום" date-type-report="day"></i>
+        </span>
+
+    </div>
+
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2 mx-4">
+    <div>
+
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+        <span class="text-muted mx-2 hosting-records-index">
+            מציג רשומה <b class="min-record">-</b> עד <b class="max-record">-</b> מתוך <b class="total-records">-</b>
+        </span>
+
+        <div class="input-group hosting-pages" style="width: auto;" data-model-name="hosting">
+            <span class="input-group-text cursor-pointer pages-btn min-page">-</span>
+            <input type="number" class="form-control page-input page-number" style="width: 60px;" value="">
+            <span class="input-group-text cursor-pointer pages-btn max-page">-</span>
+        </div>
+    </div>
+</div>
+
+<div class="px-3 bg-white" style="max-height: 75vh; overflow: auto; font-size: 12px">
+    <table id="hostingTable" class="table table-sm table-hover table-striped table-bordered" data-model-name="hosting">
+        <thead class="bg-white position-sticky small" style="top: 0; font-size: 0.85rem;">
+            <tr>
+                <th style="width: 12%;" data-column="house__description" class="column-sort">דירה
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 6%;" data-column="guest__last_name" class="column-sort">שם אורח
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 6%;">עיר אורח
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 8%;" data-column="guest_is_patient" class="column-sort">סטטוס אורח
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 6%;" data-column="patient__last_name" class="column-sort">שם מטופל
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 6%;">עיר מטופל
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 10%;" data-column="hospital_ward" class="column-sort">מחלקה
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 10%;" data-column="trigger" class="column-sort">גורם מפנה
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 10%;" data-column="lodging_start" class="column-sort">תאריך כניסה
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 10%;" data-column="lodging_end" class="column-sort">תאריך יציאה
+                    <i class="bi bi-caret-down-fill cursor-pointer sort-icon ms-1 d-none" data-sort="none"></i>
+                </th>
+                <th style="width: 5%;"> לילות
+                </th>
+                <th style="width: 5%;"> אנשים
+                </th>
+                <th style="width: 8%;">הערות
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+</div>
+
+<script>
+
+    $(document).ready(function () {
+        getTable('hosting');
+        $('[data-toggle="tooltip"]').tooltip();
+
+        $('#hostingTable tbody').on('click', 'tr', edit_hosting);
+        
+        $('.hosting-report').on('click', function() {
+            let reportType = $(this).attr('date-type-report');
+            let filters = getFiltersOfModel('hosting');
+            
+            let endpoint = reportType === 'summary' ? 'get_excel_hostings_summary' : 'get_excel_hostings_daily';
+            
+            // Create form and submit
+            let form = $('<form>', {
+                'method': 'POST',
+                'action': endpoint
+            });
+            
+            // Add CSRF token
+            form.append($('<input>', {
+                'type': 'hidden',
+                'name': 'csrfmiddlewaretoken',
+                'value': csrfToken
+            }));
+            
+            // Add filters as JSON
+            form.append($('<input>', {
+                'type': 'hidden',
+                'name': 'data',
+                'value': JSON.stringify({filters: filters})
+            }));
+            
+            // Submit form
+            form.appendTo('body').submit().remove();
+        });
+    });
+
+    function edit_hosting() {
+        let hosting_id = $(this).data("id");
+        loadContent('#hosting_modal_content', 'hosting/' + hosting_id);
+        $('#hosting_modal').modal('show');
+    }
+</script>

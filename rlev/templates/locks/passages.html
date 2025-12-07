@@ -1,0 +1,103 @@
+{% load custom_filters %}
+<div class="sticky-top p-3  bg-white border-bottom d-flex justify-content-between align-items-center" style="z-index: 1000; height: 10vh">
+
+
+    <div>
+        <span class="fs-4 fw-bold ">מצבי מעבר</span>
+    </div>
+    <div class="fs-4">
+        <i class="bi bi-plus-circle cursor-pointer mx-2" data-toggle="tooltip" title="הוסף מצב מעבר" id="add_passage"></i>
+    </div>
+
+</div>
+<div class="p-3 bg-white" style="font-size: 12px" id="passages">
+    <div class="p-3">
+        <div class="row">
+            {% for passage in passages %}
+            <div class="col-4 passage-box cursor-pointer" data-passage-id={{ passage.id }}>
+                <div class="card text-bg-light m-2 custom-shadow" {% if not passage.active %} style="opacity: 0.5" {% endif %}>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span class="fs-6 fw-bold">{{ passage.description }}</span>
+                        <div class="d-flex fs-6 justify-content-between align-items-center">
+
+                            {% if passage.is_cyclic %}
+                            <i class="bi bi-arrow-repeat"></i>
+                            {% else %}
+                            <i class="bi bi-1-circle"></i>
+                            {% endif %}
+
+                        </div>
+                    </div>
+                    <div class="card-body fs-6" style="height: 20vh;">
+                        <div>
+                            <i class="bi bi-hourglass-top"></i> {{ passage.start_range_description }}
+                        </div>
+                        <div>
+                            <i class="bi bi-hourglass-bottom"></i> {{ passage.end_range_description }}
+                        </div>
+                        <div>
+                            <div class="d-flex">
+                                <i class="bi bi-lock"></i>
+                                <div class="mx-1">
+                                    {% for lock in passage.locks|slice:":5" %}
+                                    <span class="badge" style="font-size: x-small; background-color: var(--bs-gray-500)">
+                                        {{ lock.lock_details.lock_alias }}</span>
+                                    {% endfor %}
+                                    {% if passage.locks_not_on_view %}
+                                    <span class="badge text-bg-secondary" style="font-size: x-small;">
+                                        +{{ passage.locks_not_on_view }} נוספים</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer fs-6 text-center">
+                        {% if passage.active %}
+                        {% if passage.done == 2 %}
+                        <span class="badge bg-success">הסתיים</span>
+                        {% else %}
+                        {% if passage.in_range %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge bg-warning">פעיל כעת</span>
+                            <div class="d-flex justify-content-between align-items-center">
+                                {% if passage.status_locks.active %} <span class="badge bg-success mx-1">{{ passage.status_locks.active }}</span> {% endif %}
+                                {% if passage.status_locks.unactive %} <span class="badge bg-secondary mx-1">{{ passage.status_locks.unactive }}</span> {% endif %}
+                                {% if passage.status_locks.in_action %} <span class="badge bg-warning mx-1">{{ passage.status_locks.in_action }}</span> {% endif %}
+                                {% if passage.status_locks.canceled %} <span class="badge bg-info mx-1">{{ passage.status_locks.canceled }}</span> {% endif %}
+                            </div>
+                        </div>
+                        {% else %}
+                        <span class="badge bg-primary">הפעלה הבאה: {{ passage.next_range }}</span>
+                        {% endif %}
+                        {% endif %}
+                        {% else %}
+                        <span class="badge bg-secondary">מושבת</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function () {
+            $(".passage-box").click(view_passage);
+            $("#add_passage").click(function () {
+                loadContent('#md-modal-content', 'passage');
+                $('#modal-md').modal('show');
+            });
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+
+
+        
+        function view_passage() {
+            let passage_id = $(this).data("passage-id");
+            loadContent('#lg-modal-content', 'passage/' + passage_id);
+            $('#modal-lg').modal('show');
+        }
+
+
+    </script>

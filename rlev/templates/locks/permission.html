@@ -1,0 +1,589 @@
+{% load custom_filters %}
+<div class="modal-header">
+    {% if type_view == 'edit' %}
+    <h5 class="modal-title">עריכת הרשאה</h5>
+    <input type="text" id="type_permission" hidden value="{{ details.type_permission }}">
+    {% else %}
+    <input id="by_object" type="text" hidden value="{{ by_object }}">
+    <input type="text" id="type_permission" hidden value="{% if details.type_permission %}{{ details.type_permission }}{% else %}1{% endif %}">
+    {% if by_object == 'multy' %}
+    <h5 class="modal-title">הוספת הרשאות</h5>
+    {% else %}
+    <h5 class="modal-title">הוספת הרשאה</h5>
+    {% endif %}
+    {% endif %}
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <input id="type_view" type="text" hidden value="{{ type_view }}">
+    <div id="person_area" class="d-none row m-2">
+        <div class="col-1">
+            <i class="bi bi-person fs-4"></i>
+        </div>
+        <div class="col-11">
+            <select class="form-select" id="person_id" {% if person_id %}value="{{ person_id }}" disabled{% endif %}>
+                <option value="0">בחר אורח</option>
+                {% for person in persons %}
+                <option value="{{ person.id }}" {% if person_id == person.id %} selected {% endif %}>{{ person.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div id="type_identification" class="d-none row m-2">
+        <div class="col-1">
+            <i class="bi bi-diamond fs-4"></i>
+        </div>
+        <div class="col-11">
+            <input id="type_object" type="text" hidden value="{{ details.type_object }}">
+            <div class="btn-group d-flex justify-content-center align-items-center">
+                <input type="radio" class="btn-check" value="cards" {% if details.type_object == 8 %}checked{% endif %}
+                    {% if type_view == 'edit' %}disabled{% endif %} {% if card_id %}disabled checked {% endif %} name="type_identification" id="card">
+                <label class="btn btn-outline-primary" for="card">
+                    <i class="bi bi-credit-card"></i> כרטיס
+                </label>
+                <input type="radio" class="btn-check" value="phones" {% if details.type_object == 16 %}checked{% endif %}
+                    {% if type_view == 'edit' %}disabled{% endif %} {% if card_id %}disabled {% endif %} name="type_identification" id="phone">
+                <label class="btn btn-outline-primary" for="phone">
+                    <i class="bi bi-phone"></i> פלאפון
+                </label>
+            </div>
+        </div>
+    </div>
+    <div id="cards_area" class="d-none row m-2">
+        <input type="text" id="cards_ids" hidden value="{{ cards_ids }}">
+        <div class="col-1">
+            <i class="bi bi-credit-card fs-4"></i>
+        </div>
+        <div id="cards_value" class="col-11">
+            <input type="text" id="card_value" disabled class="form-control" value="{{ details.object_description }} {{ card_description }}">
+        </div>
+    </div>
+    <div id="phones_area" class="d-none row m-2">
+        <input type="text" id="phones_ids" hidden value="{{ phones_ids }}">
+        <div class="col-1">
+            <i class="bi bi-phone fs-4"></i>
+        </div>
+        <div id="phones_value" class="col-11">
+            <input type="text" disabled class="form-control" value="{{ details.object_description }}">
+        </div>
+    </div>
+    <div id="locks_area" class="row m-2">
+        <input type="text" id="locks_ids" hidden value="{{ locks_ids }}">
+        <input type="text" id="locks_descriptions" hidden value="{{ locks_descriptions }}">
+        <div class="col-1">
+            <i class="bi bi-lock fs-4"></i>
+        </div>
+        <div id="lock_value" class="col-11">
+            <input id="single_lock" class="d-none form-control" type="text" disabled value="{{ details.lock_alias }}{{ lock_alias }}">
+            <div id="multy_locks">
+                <div class="d-flex border rounded m-1 p-1 flex-wrap justify-content-start align-items-start"
+                    id="locksPermissionsContainer" style="max-width: 100%; height: 10vh; overflow: auto;"></div>
+                <div class="d-flex justify-content-end">
+                    <div><span class="badge rounded-pill bg-primary" id="select_locks_to_permission" style="cursor: pointer;"><i
+                                class="bi bi-plus-circle"></i> הוסף מנעולים</span></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <div class="row m-2 align-items-center">
+
+        <div class="col-1">
+            <i class="bi bi-shield fs-4"></i>
+        </div>
+        <div class="col-11 btn-group">
+            <input type="radio" class="btn-check" value="1" {% if details.type_permission == 1 or not details.type_permission %}checked{% endif %} name="type_permission" id="const">
+            <label class="btn btn-outline-primary" for="const">
+                <i class="bi bi-lock-fill"></i> קבוע
+            </label>
+            <input type="radio" class="btn-check" value="2" {% if details.type_permission == 2 %}checked{% endif %} name="type_permission" id="temp">
+            <label class="btn btn-outline-primary" for="temp">
+                <i class="bi bi-hourglass-split"></i> זמני
+            </label>
+            <input type="radio" class="btn-check" value="3" {% if details.type_permission == 3 %}checked{% endif %} name="type_permission" id="cycle">
+            <label class="btn btn-outline-primary" for="cycle">
+                <i class="bi bi-arrow-clockwise"></i> מחזורי
+            </label>
+        </div>
+    </div>
+    <div class="row m-2">
+        <div id="temp_permission" {% if not details.type_permission == 2 %}class="d-none" {% endif %}>
+            <div class="form-group row">
+                <div class="col">
+                    <label for="valid_date">
+                        <i class="bi bi-calendar-check"></i> תאריך התחלה
+                    </label>
+                    <input type="date" class="form-control" id="temp_start_date" style="text-align: right" value="{% if details.start_date %}{{ details.start_date|time_to_date }}{% endif %}">
+                </div>
+                <div class="col">
+                    <label for="valid_date">
+                        <i class="bi bi-clock"></i> שעת התחלה
+                    </label>
+                    <input type="time" class="form-control" id="temp_start_time" style="text-align: right" value="{% if details.start_date %}{{ details.start_date|time_to_time }}{% endif %}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col">
+                    <label for="valid_date">
+                        <i class="bi bi-calendar-check"></i> תאריך סיום
+                    </label>
+                    <input type="date" class="form-control" id="temp_end_date" name="end_date" style="text-align: right"
+                        value="{% if details.end_date %}{{ details.end_date|time_to_date }}{% endif %}">
+                </div>
+                <div class="col">
+                    <label for="valid_date">
+                        <i class="bi bi-clock"></i> שעת סיום
+                    </label>
+                    <input type="time" class="form-control" id="temp_end_time" name="end_tume" style="text-align: right"
+                        value="{% if details.end_date %}{{ details.end_date|time_to_time }}{% endif %}">
+                </div>
+            </div>
+        </div>
+        <div id="cycle_permission" {% if not details.type_permission == 3 %}class="d-none" {% endif %}>
+            <div class="form-group row">
+                <div class="col">
+                    <label for="valid_date">
+                        <i class="bi bi-calendar-check"></i> תאריך התחלה
+                    </label>
+                    <input type="date" class="form-control" id="cycle_start_date" name="cycle_start_date" style="text-align: right"
+                        value="{% if type_view == 'edit' %}{{ details.start_date|time_to_date }}{% endif %}">
+                </div>
+                <div class="col">
+                    <label for="valid_date">
+                        <i class="bi bi-clock"></i> תאריך סיום
+                    </label>
+                    <input type="date" class="form-control" id="cycle_end_date" name="cycle_end_date" style="text-align: right"
+                        value="{% if type_view == 'edit' %}{{ details.end_date|time_to_date }}{% endif %}">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label>ימים {{ details.cyclic_details.days.Sunday }}</label>
+                <div class="align-items-center mx-3">
+                    <span class="btn badge {% if type_view == 'edit' and details.cyclic_config.days.Sunday %} bg-primary {% else %} border-primary text-primary {% endif %} m-1 days-button"
+                        id="day7">ראשון</span>
+                    <span class="btn badge {% if type_view == 'edit' and details.cyclic_config.days.Monday %} bg-primary {% else %} border-primary text-primary {% endif %} m-1 days-button"
+                        id="day1">שני</span>
+                    <span class="btn badge {% if type_view == 'edit' and details.cyclic_config.days.Tuesday %} bg-primary {% else %} border-primary text-primary {% endif %} m-1 days-button"
+                        id="day2">שלישי</span>
+                    <span class="btn badge {% if type_view == 'edit' and details.cyclic_config.days.Wednesday %} bg-primary {% else %} border-primary text-primary {% endif %} m-1 days-button"
+                        id="day3">רביעי</span>
+                    <span class="btn badge {% if type_view == 'edit' and details.cyclic_config.days.Thursday %} bg-primary {% else %} border-primary text-primary {% endif %} m-1 days-button"
+                        id="day4">חמישי</span>
+                    <span class="btn badge {% if type_view == 'edit' and details.cyclic_config.days.Friday %} bg-primary {% else %} border-primary text-primary {% endif %} m-1 days-button"
+                        id="day5">שישי</span>
+                    <span class="btn badge {% if type_view == 'edit' and details.cyclic_config.days.Saturday %} bg-primary {% else %} border-primary text-primary {% endif %} m-1 days-button"
+                        id="day6">שבת</span>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col">
+                    <label for="valid_date">
+                        <i class="bi bi-clock"></i> החל משעה
+                    </label>
+                    <input type="time" class="form-control" id="cycle_start_time" name="cycle_start_time" style="text-align: right"
+                        value="{% if type_view == 'edit' %}{{ details.cyclic_config.start_time }}{% endif %}">
+                </div>
+                <div class="col">
+                    <label for="valid_date">
+                        <i class="bi bi-clock"></i> עד שעה
+                    </label>
+                    <input type="time" class="form-control" id="cycle_end_time" name="cycle_end_time" style="text-align: right"
+                        value="{% if type_view == 'edit' %}{{ details.cyclic_config.end_time }}{% endif %}">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">סגור</button>
+    <button type="button" id="save_permission" class="btn btn-primary">שמור</button>
+</div>
+<script>
+    var csrfToken = "{{ csrf_token }}";
+    $(document).ready(function () {
+        view_fields();
+        $('.days-button').click(function () {
+            $(this).toggleClass('bg-primary');
+            $(this).toggleClass('text-primary');
+            $(this).toggleClass('border-primary');
+        });
+
+        $('input[name="type_identification"]').change(function () {
+            let type_identification = this.value;
+            get_object_persomisions(type_identification);
+        });
+
+        $('input[name="type_permission"]').change(function () {
+            $('#type_permission').val(this.value);
+
+            $('#temp_permission').addClass('d-none');
+            $('#cycle_permission').addClass('d-none');
+            if (this.value == 2) {
+                $('#temp_permission').removeClass('d-none');
+            } else if (this.value == 3) {
+                $('#cycle_permission').removeClass('d-none');
+            }
+
+        });
+
+        $('#save_permission').click(save_permission);
+
+        $('#person_id').change(function () {
+            get_object_persomisions();
+        });
+
+        $('#select_locks_to_permission').click(select_locks_for_permissions);
+    });
+
+    function view_fields() {
+        let type_view = $('#type_view').val();
+        if (type_view == 'edit') view_existing_fields();
+        else view_new_fields();
+
+        let locks_alias = $('#single_lock').val();
+        if (locks_alias.length > 0) {
+            $('#multy_locks').addClass('d-none');
+            $('#single_lock').removeClass('d-none');
+        }
+    }
+
+    function view_existing_fields() {
+        $('#person_area,  #single_lock').removeClass('d-none');
+        let type_object = $('#type_object').val();
+        if (type_object == '8') {
+            $('#cards_area').removeClass('d-none');
+        }
+        else {
+            $('#phones_area').removeClass('d-none');
+        }
+    }
+
+    function view_new_fields() {
+        let by_object = $('#by_object').val();
+
+        if (by_object == 'multy') {
+            $('#person_area').addClass('d-none');
+
+            let cards_ids = $('#cards_ids').val();
+            let cards = JSON.parse(cards_ids);
+
+            let phones_ids = $('#phones_ids').val();
+            let phones = JSON.parse(phones_ids);
+
+            let locks_ids_str = $('#locks_ids').val();
+            let locks_ids = JSON.parse(locks_ids_str);
+
+
+            if (cards.length) {
+                $('#cards_area').removeClass('d-none');
+                $('#cards_value').html('<div class="d-flex justify-content-center align-items-center h-100"> <span class="fw-bold"> נבחרו ' + cards.length + ' כרטיסים </span></div> ');
+            }
+            if (phones.length) {
+                $('#phones_area').removeClass('d-none');
+                $('#phones_value').html('<div class="d-flex justify-content-center align-items-center h-100"> <span class="fw-bold"> נבחרו ' + phones.length + ' פלאפונים </span></div> ');
+            }
+            if (locks_ids.length) {
+                let locks_descriptions_str = $('#locks_descriptions').val();
+                console.log(locks_descriptions_str);
+                let locks_descriptions = JSON.parse(locks_descriptions_str);
+                add_locks_to_container(locks_ids, locks_descriptions)
+            }
+        }
+        else {
+            $('#person_area').removeClass('d-none');
+
+            let cards_ids = $('#cards_ids').val();
+            if (cards_ids == '[]') {
+                get_object_persomisions();
+            }
+            else {
+                $('#cards_area').removeClass('d-none');
+            }
+        }
+
+
+        
+    }
+
+    function save_permission() {
+
+        let data = {};
+        data.cards = [];
+        data.locks = [];
+        data.phones = [];
+        data.permission_data = {};
+
+        let cards_ids = $("#cards_ids").val();
+        let phones_ids = $("#phones_ids").val();
+
+        let cards = JSON.parse(cards_ids);
+        let phones = JSON.parse(phones_ids);
+
+        if (cards.length == 0 && phones.length == 0) {
+            alert_message('יש להזין את נתוני הזיהוי להגדרת ההרשאה', 'error');
+            return;
+        }
+
+        data.cards = JSON.parse(cards_ids);
+        data.phones = JSON.parse(phones_ids);
+
+        let locks_ids = $("#locks_ids").val();
+        let locks = JSON.parse(locks_ids);
+
+        if (locks.length == 0) {
+            alert_message('לא נבחרו מנעולים', 'error');
+            return;
+        }
+
+        data.locks = locks
+
+        let type_permission = $('#type_permission').val();
+        data.permission_data.type_permission = type_permission;
+        data.permission_data.start_date = 0;
+        data.permission_data.end_date = 0;
+
+        if (type_permission == 2) {
+            let start_date = $('#temp_start_date').val();
+            let end_date = $('#temp_end_date').val();
+            let start_time = $('#temp_start_time').val();
+            let end_time = $('#temp_end_time').val();
+
+            if (start_date == '' || end_date == '' || start_time == '' || end_time == '') {
+                alert_message('יש למלא את כל השדות', 'error');
+                return;
+            }
+
+            if (start_date > end_date) {
+                alert_message('תאריך התחלה לא יכול להיות גדול מתאריך סיום', 'error');
+                return;
+            }
+
+            if (start_date == end_date && start_time > end_time) {
+                alert_message('שעת התחלה לא יכולה להיות גדולה משעת סיום', 'error');
+                return;
+            }
+
+            data.permission_data.start_date = new Date(start_date + ' ' + start_time).getTime();
+            data.permission_data.end_date = new Date(end_date + ' ' + end_time).getTime();
+        }
+
+        if (type_permission == 3) {
+            let days = [];
+            $('.days-button').each(function () {
+                if ($(this).hasClass('bg-primary')) {
+                    days.push($(this).attr('id'));
+                }
+            });
+
+            if (days.length == 0) {
+                alert_message('יש לבחור ימים', 'error');
+                return;
+            }
+
+            let start_date = $('#cycle_start_date').val();
+            let end_date = $('#cycle_end_date').val();
+            let start_time = $('#cycle_start_time').val();
+            let end_time = $('#cycle_end_time').val();
+
+            if (start_date == '' || end_date == '' || start_time == '' || end_time == '') {
+                alert_message('יש למלא את כל השדות', 'error');
+                return;
+            }
+
+            if (start_date > end_date) {
+                alert_message('תאריך התחלה לא יכול להיות גדול מתאריך סיום', 'error');
+                return;
+            }
+
+            if (start_time > end_time) {
+                alert_message('שעת התחלה לא יכולה להיות גדולה משעת סיום', 'error');
+                return;
+            }
+
+
+            data.permission_data.start_date = new Date(start_date).getTime();
+            data.permission_data.end_date = new Date(end_date).getTime();
+
+            let [hours_start, minutes_start] = start_time.split(':').map(Number);
+            start_time = hours_start * 60 + minutes_start;
+
+            let [hours_end, minutes_end] = end_time.split(':').map(Number);
+            end_time = hours_end * 60 + minutes_end;
+
+            cyclic_config = []
+            days.forEach(function (day) {
+                day_config = {
+                    weekDay: parseInt(day.substring(3)),
+                    startTime: start_time,
+                    endTime: end_time
+                }
+                cyclic_config.push(day_config);
+            });
+
+            data.permission_data.cyclic_config = cyclic_config;
+        }
+        console.log(JSON.stringify(data));
+
+        $.ajax({
+            url: 'save_permissions',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            beforeSend: function (xhr, settings) {
+                xhr.setRequestHeader("X-CSRFToken", csrfToken);
+            },
+            success: function () {
+                alert_message('נתוני ההרשאות נשלחו לשידור', 'ok');
+                refresh_permissions_screens();
+                transmission(locks);
+                $('#modal-md').modal('hide');
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status == 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+
+    function get_object_persomisions(type_identification = null) {
+        $("#cards_ids").val('[]');
+        $("#phones_ids").val('[]');
+
+        let person_id = $('#person_id').val();
+
+        if (person_id == '' || person_id == 0) {
+            return;
+        }
+        $.ajax({
+            url: 'get_person_permission_objects/' + person_id,
+            type: 'GET',
+            success: function (data) {
+                console.log(data);
+                cards = data.cards;
+                phones = data.phones;
+
+                if (cards.length > 0 && phones.length > 0 && type_identification == null) {
+                    $("#type_identification").removeClass("d-none");
+                    $("#type_identification input[type='radio']").prop("disabled", false);
+                    $("#type_identification input[type='radio']").prop("checked", false);
+                    $("#cards_area").addClass("d-none");
+                    $("#phones_area").addClass("d-none");
+                }
+                else {
+
+                    if (cards.length == 0 && phones.length == 0) {
+                        alert_message('עדיין לא נוספו כרטיסים או פלאפונים לאורח', 'error');
+                        if ($("#person_modal").length) {
+                            check_view_permissions();
+                        }
+                        $('#modal-md').modal('hide');
+                    }
+                    if ((cards.length > 0 && type_identification == null) || type_identification == 'cards') {
+                        set_objects_area(data, 'cards');
+                    }
+                    else if ((phones.length > 0 && type_identification == null) || type_identification == 'phones') {
+                        set_objects_area(data, 'phones');
+                    }
+                }
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                if (xhr.status == 401) {
+                    window.location.href = '/login';
+                }
+            }
+        });
+    }
+
+    function set_objects_area(data, type_identification) {
+        if (type_identification == 'cards') {
+            $("#cards_area").removeClass("d-none");
+            $("#phones_area").addClass("d-none");
+        }
+        else {
+            $("#cards_area").addClass("d-none");
+            $("#phones_area").removeClass("d-none");
+        }
+
+        objects = data[type_identification];
+
+        if (objects.length == 1) {
+            $('#' + type_identification + '_ids').val("[" + objects[0].id + "]");
+            $('#' + type_identification + '_value').html("");
+            const object_value = $("<input>").attr("type", "text").attr("id", "object_value").attr("disabled", true).addClass('form-control');
+            object_value.val(objects[0].description);
+            $('#' + type_identification + '_value').append(object_value);
+        }
+        else {
+            $('#' + type_identification + '_value').html("");
+
+            const select_object = $("<select>").attr("id", "select_object").addClass('form-control');
+            select_object.append(new Option("בחר", 0));
+            objects.forEach(function (object) {
+                select_object.append(new Option(object.description, object.id));
+            });
+            select_object.on('change', function () {
+                $('#' + type_identification + '_ids').val("[" + this.value + "]");
+            });
+            $('#' + type_identification + '_value').append(select_object);
+        }
+
+    }
+
+    async function select_locks_for_permissions() {
+        let selected_locks = await select_locks();
+        let locks_ids = selected_locks.locks_ids;
+        let locks_descriptions = selected_locks.locks_descriptions;
+
+        if (locks_ids.length == 0) {
+            return;
+        }
+        
+
+        add_locks_to_container(locks_ids, locks_descriptions)
+    }
+
+    function add_locks_to_container(locks_ids, locks_descriptions) {
+        for (let i = 0; i < locks_ids.length; i++) {
+            let lockId = locks_ids[i];
+
+            if ($('#locksPermissionsContainer').find(`div[data-lock-id="${lockId}"]`).length ===  0) {
+                let lockItem = $('<div data-lock-id="' + lockId + '">')
+                    .addClass('d-flex justify-content-between align-items-center bg-secondary rounded m-1')
+                    .css('width', 'fit-content');
+
+                let span = $('<span>')
+                    .addClass('text-white fw-bold mx-1')
+                    .css('font-size', 'small')
+                    .text(locks_descriptions[i]);
+
+                let btn = $('<button>')
+                    .addClass('btn btn-secondary rounded-end p-0 px-1 lock_link_btn')
+                    .css('font-size', 'small')
+                    .text('x')
+                    .click(function () {
+                        $(this).parent().remove();
+                        update_locks_ids();
+                    });
+
+                $(lockItem).append(span);
+                $(lockItem).append(btn);
+                $('#locksPermissionsContainer').append(lockItem);
+            }
+        }
+        update_locks_ids();
+    }
+
+    function update_locks_ids() {
+        let idsArray = [];
+
+        $('#locksPermissionsContainer').find('div[data-lock-id]').each(function () {
+            idsArray.push($(this).data('lock-id'));
+        });
+        let idsString = JSON.stringify(idsArray);
+        let locks_ids = $("#locks_ids").val(idsString);
+    }
+
+</script>
