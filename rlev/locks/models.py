@@ -22,7 +22,7 @@ from .consumers import *
 from django.contrib.auth.models import User
 from .webhooks import WebHooks
 
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 
 def default_timestamp():
@@ -1874,4 +1874,157 @@ def delete_permissions_of_card(sender, instance, **kwargs):
 @receiver(post_delete, sender=Phone)
 def delete_permissions_of_card(sender, instance, **kwargs):
     Permission.objects.filter(type_object_id=16, object_id=instance.id).delete()
+
+
+@receiver(pre_save, sender=Person)
+def store_person_original(sender, instance, **kwargs):
+    """Store original Person data before save to detect changes"""
+    if instance.pk:
+        try:
+            instance._original = Person.objects.get(pk=instance.pk)
+        except Person.DoesNotExist:
+            instance._original = None
+    else:
+        instance._original = None
+
+
+@receiver(post_save, sender=Person)
+def send_person_webhook(sender, instance, created, **kwargs):
+    """Send webhook when Person is created or updated"""
+    import requests
+    import json
+    
+    # Check if anything actually changed (for updates only)
+    if not created and hasattr(instance, '_original') and instance._original:
+        old_instance = instance._original
+        # Compare relevant fields
+        fields_to_check = ['id_number', 'first_name', 'last_name', 'first_name_eng', 
+                         'last_name_eng', 'birth_date', 'email', 'address', 'house_number',
+                         'city', 'person_phone', 'role', 'note', 'status_record', 'not_to_view']
+        
+        has_changes = False
+        for field in fields_to_check:
+            if getattr(old_instance, field) != getattr(instance, field):
+                has_changes = True
+                break
+        
+        # Also check file field
+        if old_instance.id_number_file != instance.id_number_file:
+            has_changes = True
+        
+        if not has_changes:
+            return  # No changes, don't send webhook
+    
+    webhook_url = "https://hook.eu1.make.com/p1kso9x2p2ht6ykip1cvahqw7wwyzmyq"
+    
+    # Prepare data
+    data = {
+        "type": "person",
+        "action": "created" if created else "updated",
+        "id": instance.id,
+        "id_number": instance.id_number,
+        "first_name": instance.first_name,
+        "last_name": instance.last_name,
+        "first_name_eng": instance.first_name_eng,
+        "last_name_eng": instance.last_name_eng,
+        "birth_date": instance.birth_date.isoformat() if instance.birth_date else None,
+        "email": instance.email,
+        "address": instance.address,
+        "house_number": instance.house_number,
+        "city": instance.city,
+        "person_phone": instance.person_phone,
+        "role": instance.role,
+        "note": instance.note,
+        "status_record": instance.status_record,
+        "not_to_view": instance.not_to_view,
+        "date_add": instance.date_add,
+        "id_number_file_url": instance.id_number_file.url if instance.id_number_file else None
+    }
+    
+    try:
+        response = requests.post(webhook_url, json=data, timeout=5)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        # Log error but don't fail the save operation
+        print(f"Webhook error: {e}")
+
+
+@receiver(pre_save, sender=Hosting)
+def store_hosting_original(sender, instance, **kwargs):
+    """Store original Hosting data before save to detect changes"""
+    if instance.pk:
+        try:
+            instance._original = Hosting.objects.get(pk=instance.pk)
+        except Hosting.DoesNotExist:
+            instance._original = None
+    else:
+        instance._original = None
+
+
+@receiver(post_save, sender=Hosting)
+def send_hosting_webhook(sender, instance, created, **kwargs):
+    """Send webhook when Hosting is created or updated"""
+    import requests
+    import json
+    
+    # Check if anything actually changed (for updates only)
+    if not created and hasattr(instance, '_original') and instance._original:
+        old_instance = instance._original
+        # Compare relevant fields
+        fields_to_check = ['house_id', 'guest_id', 'patient_id', 'affinity', 
+                         'guest_is_patient', 'lodging_start', 'lodging_end', 
+                         'hospital_ward', 'hospital_ward_eng', 'trigger', 'documents',
+                         'note', 'send_feedback', 'file_path1', 'file_path2', 'persons_in_house']
+        
+        has_changes = False
+        for field in fields_to_check:
+            if getattr(old_instance, field) != getattr(instance, field):
+                has_changes = True
+                break
+        
+        if not has_changes:
+            return  # No changes, don't send webhook
+    
+    webhook_url = "https://hook.eu1.make.com/p1kso9x2p2ht6ykip1cvahqw7wwyzmyq"
+    
+    # Prepare data
+    data = {
+        "type": "hosting",
+        "action": "created" if created else "updated",
+        "id": instance.id,
+        "house_id": instance.house.id,
+        "house_description": instance.house.description,
+        "guest_id": instance.guest.id,
+        "guest_name": instance.guest.get_name(),
+        "guest_first_name": instance.guest.first_name,
+        "guest_last_name": instance.guest.last_name,
+        "guest_id_number": instance.guest.id_number,
+        "guest_phone": instance.guest.person_phone,
+        "patient_id": instance.patient.id if instance.patient else None,
+        "patient_name": instance.patient.get_name() if instance.patient else None,
+        "patient_first_name": instance.patient.first_name if instance.patient else None,
+        "patient_last_name": instance.patient.last_name if instance.patient else None,
+        "patient_id_number": instance.patient.id_number if instance.patient else None,
+        "affinity": instance.affinity,
+        "guest_is_patient": instance.guest_is_patient,
+        "lodging_start": instance.lodging_start.isoformat(),
+        "lodging_end": instance.lodging_end.isoformat(),
+        "hospital_ward": instance.hospital_ward,
+        "hospital_ward_eng": instance.hospital_ward_eng,
+        "trigger": instance.trigger,
+        "documents": instance.documents,
+        "note": instance.note,
+        "date_add": instance.date_add,
+        "send_feedback": instance.send_feedback,
+        "file_path1": instance.file_path1,
+        "file_path2": instance.file_path2,
+        "persons_in_house": instance.persons_in_house
+    }
+    
+    try:
+        response = requests.post(webhook_url, json=data, timeout=5)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        # Log error but don't fail the save operation
+        print(f"Webhook error: {e}")
 
