@@ -25,6 +25,11 @@ media/id_number_files/
 /static/
 *.pot
 
+# Database backups
+*.sql
+*.sql.gz
+backups/
+
 # IDE
 .vscode/
 .idea/
