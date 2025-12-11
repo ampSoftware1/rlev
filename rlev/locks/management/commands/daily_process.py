@@ -10,17 +10,21 @@ class Command(BaseCommand):
     help = 'Run daily process'
 
     def handle(self, *args, **options):
-        logging.info('------------------------------------------------------------')
-        logging.info('Daily process start at %s', datetime.now())
+        from locks.models import Person
+        person = Person.objects.get(id=228)
+        person.first_name = "נסיון עריכה"
+        person.save()
+        # # logging.info('------------------------------------------------------------')
+        # # logging.info('Daily process start at %s', datetime.now())
         
-        check_locks_battery()
+        # # check_locks_battery()
 
-        logging.info('Daily process end at %s', datetime.now())
-        logging.info('------------------------------------------------------------')
+        # # logging.info('Daily process end at %s', datetime.now())
+        # # logging.info('------------------------------------------------------------')
 
-        logging.info('Starting database backup...')
+        # # logging.info('Starting database backup...')
 
-        bkup_database()
+        # bkup_database()
 
 
 
@@ -28,11 +32,13 @@ class Command(BaseCommand):
 def bkup_database():
     import requests
     import subprocess
+    import gzip
     from django.conf import settings
     
     try:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         backup_file = os.path.join(BASE_DIR, 'backups', f'db_backup_{timestamp}.sql')
+        backup_file_gz = os.path.join(BASE_DIR, 'backups', f'db_backup_{timestamp}.sql.gz')
         os.makedirs(os.path.dirname(backup_file), exist_ok=True)
         
         # Get database settings from Django
@@ -48,19 +54,31 @@ def bkup_database():
         
         if result.returncode != 0:
             logging.error('MySQL dump failed: %s', result.stderr)
+            print(f'Error during database backup: {result.stderr}')
             return
         
         logging.info('Database backup completed: %s', backup_file)
         
-        # Send backup file via webhook
+        # Compress the backup file
+        with open(backup_file, 'rb') as f_in:
+            with gzip.open(backup_file_gz, 'wb') as f_out:
+                f_out.writelines(f_in)
+        
+        logging.info('Database backup compressed: %s', backup_file_gz)
+        print(f'Database backup compressed: {backup_file_gz}')
+        
+        # Remove uncompressed file to save space
+        os.remove(backup_file)
+        
+        # Send compressed backup file via webhook
         webhook_url = "https://hook.eu1.make.com/p1kso9x2p2ht6ykip1cvahqw7wwyzmyq"
         
-        with open(backup_file, 'rb') as f:
+        with open(backup_file_gz, 'rb') as f:
             files = {
                 'backup_file': (
-                    f'db_backup_{timestamp}.sql',
+                    f'db_backup_{timestamp}.sql.gz',
                     f.read(),
-                    'application/sql'
+                    'application/gzip'
                 )
             }
             
@@ -70,9 +88,11 @@ def bkup_database():
                 'database': db_name
             }
             
-            response = requests.post(webhook_url, data=data, files=files, timeout=30)
+            response = requests.post(webhook_url, data=data, files=files, timeout=60)
+            print(response.text)
             response.raise_for_status()
-            logging.info('Backup file sent to webhook successfully')
+            logging.info('Compressed backup file sent to webhook successfully')
             
     except Exception as e:
+        print(f'Error during database backup: {str(e)}')
         logging.error('Database backup failed: %s', str(e))

@@ -1962,6 +1962,7 @@ def send_person_webhook(sender, instance, created, **kwargs):
             response = requests.post(webhook_url, json=data, timeout=5)
         
         response.raise_for_status()
+        print(f"Person webhook sent successfully for Person ID {instance.id}")
     except requests.exceptions.RequestException as e:
         # Log error but don't fail the save operation
         print(f"Webhook error: {e}")
@@ -2042,6 +2043,7 @@ def send_hosting_webhook(sender, instance, created, **kwargs):
     try:
         response = requests.post(webhook_url, json=data, timeout=5)
         response.raise_for_status()
+        print(f"Hosting webhook sent successfully for Hosting ID {instance.id}")
     except requests.exceptions.RequestException as e:
         # Log error but don't fail the save operation
         print(f"Webhook error: {e}")
