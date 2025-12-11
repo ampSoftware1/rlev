@@ -1921,28 +1921,46 @@ def send_person_webhook(sender, instance, created, **kwargs):
     data = {
         "type": "person",
         "action": "created" if created else "updated",
-        "id": instance.id,
-        "id_number": instance.id_number,
-        "first_name": instance.first_name,
-        "last_name": instance.last_name,
-        "first_name_eng": instance.first_name_eng,
-        "last_name_eng": instance.last_name_eng,
-        "birth_date": instance.birth_date.isoformat() if instance.birth_date else None,
-        "email": instance.email,
-        "address": instance.address,
-        "house_number": instance.house_number,
-        "city": instance.city,
-        "person_phone": instance.person_phone,
-        "role": instance.role,
-        "note": instance.note,
-        "status_record": instance.status_record,
-        "not_to_view": instance.not_to_view,
-        "date_add": instance.date_add,
-        "id_number_file_url": instance.id_number_file.url if instance.id_number_file else None
+        "id": str(instance.id),
+        "id_number": instance.id_number or "",
+        "first_name": instance.first_name or "",
+        "last_name": instance.last_name or "",
+        "first_name_eng": instance.first_name_eng or "",
+        "last_name_eng": instance.last_name_eng or "",
+        "birth_date": instance.birth_date.isoformat() if instance.birth_date else "",
+        "email": instance.email or "",
+        "address": instance.address or "",
+        "house_number": instance.house_number or "",
+        "city": instance.city or "",
+        "person_phone": instance.person_phone or "",
+        "role": instance.role or "",
+        "note": instance.note or "",
+        "status_record": str(instance.status_record),
+        "not_to_view": str(instance.not_to_view),
+        "date_add": str(instance.date_add)
     }
     
     try:
-        response = requests.post(webhook_url, json=data, timeout=5)
+        files = {}
+        # If there's an ID number file, send it
+        if instance.id_number_file:
+            try:
+                instance.id_number_file.open('rb')
+                files['id_number_file'] = (
+                    instance.id_number_file.name.split('/')[-1],
+                    instance.id_number_file.read(),
+                    'application/octet-stream'
+                )
+                instance.id_number_file.close()
+            except Exception as e:
+                print(f"Error reading file: {e}")
+        
+        # Send with multipart/form-data when file exists, otherwise JSON
+        if files:
+            response = requests.post(webhook_url, data=data, files=files, timeout=10)
+        else:
+            response = requests.post(webhook_url, json=data, timeout=5)
+        
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         # Log error but don't fail the save operation
