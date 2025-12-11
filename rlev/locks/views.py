@@ -1800,8 +1800,8 @@ def get_excel_hostings_summary(request):
     ws.sheet_view.rightToLeft = True
     
     # Headers
-    headers = ['דירה', 'שם אורח', 'טלפון אורח', 'עיר אורח', 'סטטוס אורח', 
-               'שם מטופל', 'טלפון מטופל', 'עיר מטופל', 'מחלקה', 'גורם מפנה',
+    headers = ['דירה', 'שם אורח', 'ת.ז. מלווה', 'טלפון אורח', 'עיר אורח', 'סטטוס אורח', 
+               'שם מטופל', 'ת.ז. מטופל', 'טלפון מטופל', 'עיר מטופל', 'מחלקה', 'גורם מפנה',
                'תאריך כניסה', 'תאריך יציאה', 'לילות', 'אנשים בבית', 'הערות']
     ws.append(headers)
     
@@ -1818,17 +1818,21 @@ def get_excel_hostings_summary(request):
         guest_name = hosting.guest.get_name()
         guest_phone = hosting.guest.person_phone or ''
         guest_city = hosting.guest.city or ''
+        guest_id_number = hosting.guest.id_number or ''
         
         if hosting.guest_is_patient:
             status_guest = "מטופל"
             patient_name = ''
+            patient_id_number = guest_id_number
             patient_phone = ''
             patient_city = ''
+            guest_id_number = ''  # מלווה ריק כי האורח הוא המטופל
         else:
             status_guest = "מלווה"
             if hosting.affinity:
                 status_guest += f' ({hosting.affinity})'
             patient_name = hosting.patient.get_name() if hosting.patient else ''
+            patient_id_number = hosting.patient.id_number if hosting.patient else ''
             patient_phone = hosting.patient.person_phone if hosting.patient else ''
             patient_city = hosting.patient.city if hosting.patient else ''
         
@@ -1837,10 +1841,12 @@ def get_excel_hostings_summary(request):
         row = [
             hosting.house.description,
             guest_name,
+            guest_id_number,
             guest_phone,
             guest_city,
             status_guest,
             patient_name,
+            patient_id_number,
             patient_phone,
             patient_city,
             hosting.hospital_ward or '',
@@ -1896,8 +1902,8 @@ def get_excel_hostings_daily(request):
     ws.sheet_view.rightToLeft = True
     
     # Headers
-    headers = ['תאריך', 'דירה', 'שם אורח', 'טלפון אורח', 'עיר אורח', 'סטטוס אורח', 
-               'שם מטופל', 'טלפון מטופל', 'עיר מטופל', 'מחלקה', 'גורם מפנה',
+    headers = ['תאריך', 'דירה', 'שם אורח', 'ת.ז. מלווה', 'טלפון אורח', 'עיר אורח', 'סטטוס אורח', 
+               'שם מטופל', 'ת.ז. מטופל', 'טלפון מטופל', 'עיר מטופל', 'מחלקה', 'גורם מפנה',
                'תאריך כניסה', 'תאריך יציאה', 'לילות', 'אנשים בבית', 'הערות']
     ws.append(headers)
     
@@ -1914,17 +1920,21 @@ def get_excel_hostings_daily(request):
         guest_name = hosting.guest.get_name()
         guest_phone = hosting.guest.person_phone or ''
         guest_city = hosting.guest.city or ''
+        guest_id_number = hosting.guest.id_number or ''
         
         if hosting.guest_is_patient:
             status_guest = "מטופל"
             patient_name = ''
+            patient_id_number = guest_id_number
             patient_phone = ''
             patient_city = ''
+            guest_id_number = ''  # מלווה ריק כי האורח הוא המטופל
         else:
             status_guest = "מלווה"
             if hosting.affinity:
                 status_guest += f' ({hosting.affinity})'
             patient_name = hosting.patient.get_name() if hosting.patient else ''
+            patient_id_number = hosting.patient.id_number if hosting.patient else ''
             patient_phone = hosting.patient.person_phone if hosting.patient else ''
             patient_city = hosting.patient.city if hosting.patient else ''
         
@@ -1937,10 +1947,12 @@ def get_excel_hostings_daily(request):
                 current_date,
                 hosting.house.description,
                 guest_name,
+                guest_id_number,
                 guest_phone,
                 guest_city,
                 status_guest,
                 patient_name,
+                patient_id_number,
                 patient_phone,
                 patient_city,
                 hosting.hospital_ward or '',
